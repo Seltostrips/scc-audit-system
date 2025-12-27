@@ -1,0 +1,71 @@
+// This is your Prisma Schema
+// It defines the structure of your MongoDB collections
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  // IMPORTANT: Put your MongoDB Connection String here or in .env
+  // Example: url = env("DATABASE_URL")
+  url      = "mongodb+srv://<username>:<password>@cluster0.mongodb.net/scc-audit-system?retryWrites=true&w=majorityApp"
+}
+
+// COLLECTION 1: Staff Members
+// Used to store the list of auditors
+model Staff {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId       String   @unique // The internal ID (e.g., "AUD-001")
+  name          String   // The display name
+  role          String?  @default("audit_clerk")
+  createdAt     DateTime @default(now())
+}
+
+// COLLECTION 2: Audit Entries
+// This stores the actual inventory audit data
+model AuditEntry {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Reference to the Staff member who performed the audit
+  auditStaffId   String
+  auditStaffName String
+  
+  // Inventory Details
+  location         String   // e.g., "Noida WH", "Mumbai WH"
+  skuId           String   // e.g., "657611"
+  skuName         String
+  
+  // Yellow Cell Data (Quantities)
+  pickingQty      Float?
+  pickingLocation String?
+  bulkQty         Float?
+  bulkLocation    String?
+  nearExpiryQty   Float?
+  nearExpiryLocation String?
+  jitQty         Float?
+  jitLocation     String?
+  damagedQty      Float?
+  damagedLocation String?
+  
+  // ODIN (Order Details) Data
+  minQtyOdin      Float?
+  blockedQtyOdin   Float?
+  maxQtyOdin      Float?
+  qtyTested       Float?
+  
+  // Calculated Fields
+  totalQuantityIdentified Float?
+  
+  // Status Logic
+  status           String   // "Draft", "Submitted", "Approved", "Rejected", "Completed", "Closed"
+  objectionRaised  Boolean  @default(false)
+  
+  // Objection Workflow (if quantities don't match)
+  objectionType    String?  // "Short" or "Excess"
+  assignedClientStaffId   String?  // ID of the client staff assigned to this objection
+  assignedClientStaffName String?
+  objectionRemarks     String?
+  
+  createdAt DateTime @default(now())
+}
