@@ -48,6 +48,7 @@ export default function AdminDashboard() {
       const [auditRes, clientRes, inventoryRes, queriesRes] = await Promise.all([
         fetch('/api/admin/staff'),
         fetch('/api/client/staff'),
+        fetch('/api/inventory'),
         fetch('/api/client/queries'),
       ])
 
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
- toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff deleted successfully`)
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff deleted successfully`)
         await loadData()
       } else {
         toast.error('Failed to delete staff')
@@ -123,7 +124,7 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff toggled`)
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff toggled`)
         await loadData()
       } else {
         toast.error('Failed to toggle staff')
@@ -173,7 +174,7 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
-       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff added successfully`)
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff added successfully`)
         setIsAddDialogOpen(false)
         setIsEditDialogOpen(false)
         setSelectedStaff(null)
