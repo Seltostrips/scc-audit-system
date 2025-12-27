@@ -301,7 +301,7 @@ export default function AuditClerk2Page() {
   } else {
     toast.error('Failed to submit audit entry: Unknown error occurred')
   }
-}
+}}
 
   const handleObjectionStaffChange = (value: string) => {
     const selectedStaff = clientStaffOptions.find((staff: any) => staff.id === value)
