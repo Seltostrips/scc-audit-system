@@ -152,17 +152,21 @@ export default function ClientDashboard() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      'Draft': 'bg-gray-500',
-      'Submitted': 'bg-blue-500',
-      'Approved': 'bg-green-500',
-      'Rejected': 'bg-red-500',
-      'Resubmitted': 'bg-yellow-500',
-      'Completed': 'bg-gray-400',
-      'Closed': 'bg-purple-500'
-    }
-    return <Badge className={statusColors[status] || 'bg-gray-500'}>{status}</Badge>
+  const statusColors: Record<string, string> = {
+    'Draft': 'bg-gray-500',
+    'Submitted': 'bg-blue-500',
+    'Approved': 'bg-green-500',
+    'Rejected': 'bg-red-500',
+    'Resubmitted': 'bg-yellow-500',
+    'Completed': 'bg-gray-400',
+    'Closed': 'bg-purple-500'
   }
+  return <Badge className={statusColors[status] || 'bg-gray-500'}>{status}</Badge>
+}
+  const getObjectionTypeBadge = (type: string | null) => {
+  if (!type) return <Badge variant="outline">-</Badge>
+  const color = type === 'Short' ? 'bg-red-500' : 'bg-orange-500'
+  return <Badge className={color}>{type}</Badge>}
 
   const calculateQtyDiff = (query: Query) => {
     const diff = query.totalQuantityIdentified - query.maxQtyOdin
