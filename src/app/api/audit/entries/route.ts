@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
       parseFloat(body.damagedQty) || 0
 
     // Determine if objection is needed
-    const maxQtyOdin = parseFloat(body.maxQtyOdin) || 0
-    const needsObjection = Math.abs(totalQuantityIdentified - maxQtyOdin) > 0.01 && maxQtyOdin > 0 && totalQuantityIdentified !== maxQtyOdin
-    const objectionType = totalQuantityIdentified < maxQtyOdin ? 'Short' : (totalQuantityIdentified > maxQtyOdin ? 'Excess' : null)
+    let maxQtyOdin = parseFloat(body.maxQtyOdin) || 0
+let needsObjection = Math.abs(totalQuantityIdentified - maxQtyOdin) > 0.01 && maxQtyOdin > 0 && totalQuantityIdentified !== maxQtyOdin
+let objectionType = totalQuantityIdentified < maxQtyOdin ? 'Short' : (totalQuantityIdentified > maxQtyOdin ? 'Excess' : null)
 
     // Determine status
     let entryStatus = 'Completed'
