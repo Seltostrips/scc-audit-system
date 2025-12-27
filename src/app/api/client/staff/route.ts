@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      id: staff._id.toString(),
+      id: staff.id,
       staffId: staff.staffId,
       name: staff.name
     })
