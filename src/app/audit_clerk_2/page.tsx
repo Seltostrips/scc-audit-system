@@ -205,32 +205,32 @@ export default function AuditClerk2Page() {
       console.log('📝 Entry status:', entryStatus)
 
       const entryData = {
-         auditStaffId: staffData.id,
-    auditStaffName: auditStaffName,
-    location: selectedLocation,
-    skuId: inventoryData.skuId,
-    skuName: inventoryData.name,
-    pickingQty: parseFloat(formData.pickingQty) || 0,
-    pickingLocation: formData.pickingLocation || null,
-    bulkQty: parseFloat(formData.bulkQty) || 0,
-    bulkLocation: formData.bulkLocation || null,
-    nearExpiryQty: parseFloat(formData.nearExpiryQty) || 0,
-    nearExpiryLocation: formData.nearExpiryLocation || null,
-    jitQty: parseFloat(formData.jitQty) || 0,
-    jitLocation: formData.jitLocation || null,
-    damagedQty: parseFloat(formData.damagedQty) || 0,
-    damagedLocation: formData.damagedLocation || null,
-    minQtyOdin: parseFloat(formData.minQtyOdin) || 0,
-    blockedQtyOdin: parseFloat(formData.blockedQtyOdin) || 0,
-    maxQtyOdin: parseFloat(formData.maxQtyOdin) || 0,
-    totalQuantityIdentified: totalQuantity,
-    qtyTested: parseFloat(formData.qtyTested) || 0,
-    status: entryStatus,
-   objectionRaised: false, // Initialize here
-  objectionType: null,    // Initialize here - this fixes the error
-  assignedClientStaffId: null,
-  assignedClientStaffName: null,
-  objectionRemarks: null
+    auditStaffId: staffData.id,
+  auditStaffName: auditStaffName,
+  location: selectedLocation,
+  skuId: inventoryData.skuId,
+  skuName: inventoryData.name,
+  pickingQty: parseFloat(formData.pickingQty) || 0,
+  pickingLocation: formData.pickingLocation || null,
+  bulkQty: parseFloat(formData.bulkQty) || 0,
+  bulkLocation: formData.bulkLocation || null,
+  nearExpiryQty: parseFloat(formData.nearExpiryQty) || 0,
+  nearExpiryLocation: formData.nearExpiryLocation || 'NA',
+  jitQty: parseFloat(formData.jitQty) || 0,
+  jitLocation: formData.jitLocation || 'NA',
+  damagedQty: parseFloat(formData.damagedQty) || 0,
+  damagedLocation: formData.damagedLocation || 'NA',
+  minQtyOdin: parseFloat(formData.minQtyOdin) || 0,
+  blockedQtyOdin: parseFloat(formData.blockedQtyOdin) || 0,
+  maxQtyOdin: parseFloat(formData.maxQtyOdin) || 0,
+  totalQuantityIdentified: totalQuantity,
+  qtyTested: parseFloat(formData.qtyTested) || 0,
+  status: entryStatus,
+  objectionRaised: false,
+  objectionType: null as string | null, // 👈 This is the key fix!
+  assignedClientStaffId: null as string | null,
+  assignedClientStaffName: null as string | null,
+  objectionRemarks: null as string | null
       }
 
       if (needsObjection) {
