@@ -248,32 +248,26 @@ export default function ClientDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Status Filter</Label>
-                // At the top of your component, define the type
-type StatusFilter = "Submitted" | "Approved" | "Rejected" | "Resubmitted" | "Completed" | "all";
+               <div className="space-y-2">
+  <Label>Status Filter</Label>
+  <Select 
+    value={statusFilter} 
+    onValueChange={(value) => setStatusFilter(value as any)}
+  >
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="All statuses" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">All Statuses</SelectItem>
+      <SelectItem value="Submitted">Pending</SelectItem>
+      <SelectItem value="Approved">Approved</SelectItem>
+      <SelectItem value="Rejected">Rejected</SelectItem>
+      <SelectItem value="Resubmitted">Resubmitted</SelectItem>
+      <SelectItem value="Completed">Completed</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
 
-// In your useState
-const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-
-// In your Select component
-<Select 
-  value={statusFilter} 
-  onValueChange={(value) => setStatusFilter(value as StatusFilter)}
->
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="Submitted">Pending</SelectItem>
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="Rejected">Rejected</SelectItem>
-                      <SelectItem value="Resubmitted">Resubmitted</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </CardContent>
           </Card>
