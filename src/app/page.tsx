@@ -24,7 +24,7 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false)
 
- const handleSubmit = async () => {
+const handleSubmit = async () => {
   setIsLoading(true)
 
   try {
@@ -97,7 +97,8 @@ export default function LoginPage() {
   } finally {
     setIsLoading(false)
   }
-}
+} // ← This closing brace must exist!
+
         toast.success(`Login successful as ${role.charAt(0).toUpperCase() + role.slice(1)}`)
 
         // Redirect based on role
