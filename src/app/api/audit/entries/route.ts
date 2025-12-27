@@ -15,7 +15,7 @@ const auditStaffId = searchParams.get('auditStaffId')
     }
 
     // Find audit staff to get database ID
-    const staff = await AuditStaff.findOne({ staffId })
+    const staff = await AuditStaff.findOne({ staffId: auditStaffId })
     if (!staff) {
       return NextResponse.json({ error: 'Audit staff not found' }, { status: 404 })
     }
