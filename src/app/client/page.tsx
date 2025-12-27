@@ -188,8 +188,7 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
     return diffType + Math.abs(diff).toFixed(2)
   }
 
-  return (
-    if (isLoading) {
+  if (isLoading) {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
@@ -203,6 +202,8 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
 if (!isAuthenticated) {
   return null
 }
+  return (
+    
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       <div className="border-b bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
