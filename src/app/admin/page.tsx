@@ -19,6 +19,21 @@ type Staff = {
   pin: string
   locations: string[]
   isActive: boolean
+  location?: string
+}
+
+type AuditStaffForm = {
+  staffId: string
+  name: string
+  pin: string
+  locations: string[]
+}
+
+type ClientStaffForm = {
+  staffId: string
+  name: string
+  pin: string
+  location: string
 }
 
 export default function AdminDashboard() {
@@ -34,8 +49,8 @@ export default function AdminDashboard() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
 
-  const [auditStaffForm, setAuditStaffForm] = useState({ staffId: '', name: '', pin: '', locations: [] })
-  const [clientStaffForm, setClientStaffForm] = useState({ staffId: '', name: '', pin: '', location: '' })
+  const [auditStaffForm, setAuditStaffForm] = useState<AuditStaffForm>({ staffId: '', name: '', pin: '', locations: [] })
+  const [clientStaffForm, setClientStaffForm] = useState<ClientStaffForm>({ staffId: '', name: '', pin: '', location: '' })
 
   const [isUploading, setIsUploading] = useState(false)
 
@@ -496,7 +511,7 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle>{isEditDialogOpen ? 'Edit Staff' : 'Add Staff'}</CardTitle>
               <CardDescription>
-                {isEditDialogOpen ? 'Manage locations for ' + selectedStaff.name : 'Add new ' + (selectedStaff.locations ? 'audit' : 'client') + ' staff member'}
+                {isEditDialogOpen ? 'Manage locations for ' + selectedStaff.name : 'Add new ' + (selectedStaff.locations && selectedStaff.locations.length > 0 ? 'audit' : 'client') + ' staff member'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -560,11 +575,11 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
-              {!selectedStaff.locations && selectedStaff.location && (
+              {(!selectedStaff.locations || selectedStaff.locations.length === 0) && (
                 <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
                   <Select
-                    value={selectedStaff.location}
+                    value={selectedStaff.location || ''}
                     onValueChange={(value) => setSelectedStaff({ ...selectedStaff, location: value })}
                   >
                     <SelectTrigger className="w-full">
@@ -582,11 +597,11 @@ export default function AdminDashboard() {
                 </div>
               )}
             </CardContent>
-            <div className="flex gap-2">
+            <div className="flex gap-2 p-4">
               <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setIsEditDialogOpen(false); setSelectedStaff(null) }}>
                 Cancel
               </Button>
-              <Button onClick={handleSaveStaff} disabled={isUploading}>
+              <Button onClick={() => handleSaveStaff(selectedStaff.locations && selectedStaff.locations.length > 0 ? 'audit' : 'client')} disabled={isUploading}>
                 {isUploading ? '...' : 'Save'}
               </Button>
             </div>
