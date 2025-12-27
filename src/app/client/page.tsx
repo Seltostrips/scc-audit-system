@@ -30,6 +30,7 @@ type Query = {
   status: string
   clientAction?: string
   clientActionDate?: string
+    auditStaffName: string
 }
 
 export default function ClientDashboard() {
