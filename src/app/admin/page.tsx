@@ -123,7 +123,7 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
-        toast.success(`${type.charAt(0).toUpperCase() + ${type.slice(1)} staff toggled`)
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff toggled`)
         await loadData()
       } else {
         toast.error('Failed to toggle staff')
