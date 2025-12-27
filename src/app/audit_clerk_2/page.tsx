@@ -17,8 +17,8 @@ export default function AuditClerk2Page() {
   const router = useRouter()
 
   // Session loading state
- const [isLoading, setIsLoading] = useState(true)
-const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const [auditStaffId, setAuditStaffId] = useState('')
   const [auditStaffName, setAuditStaffName] = useState('')
@@ -57,33 +57,33 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [raisedObjections, setRaisedObjections] = useState<any[]>([])
 
   // Sync sessionStorage to state when window becomes available
- useEffect(() => {
-  const checkAuth = () => {
-    if (typeof window !== 'undefined') {
-      const staffId = sessionStorage.getItem('auditStaffId')
-      const staffName = sessionStorage.getItem('auditStaffName')
-      
-      if (staffId && staffName) {
-        setAuditStaffId(staffId)
-        setAuditStaffName(staffName)
-        setIsAuthenticated(true)
-      } else {
-        toast.error('Please login first')
-        router.push('/')
+  useEffect(() => {
+    const checkAuth = () => {
+      if (typeof window !== 'undefined') {
+        const staffId = sessionStorage.getItem('auditStaffId')
+        const staffName = sessionStorage.getItem('auditStaffName')
+        
+        if (staffId && staffName) {
+          setAuditStaffId(staffId)
+          setAuditStaffName(staffName)
+          setIsAuthenticated(true)
+        } else {
+          toast.error('Please login first')
+          router.push('/')
+        }
       }
+      setIsLoading(false)
     }
-    setIsLoading(false)
-  }
 
-  checkAuth()
-}, [])
+    checkAuth()
+  }, [])
 
   // Only check authentication AFTER session is loaded
   useEffect(() => {
-  if (isAuthenticated) {
-    loadMyEntries()
-  }
-}, [isAuthenticated])
+    if (isAuthenticated) {
+      loadMyEntries()
+    }
+  }, [isAuthenticated])
  
 
   const handleSearchSKU = async () => {
@@ -214,32 +214,32 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
       console.log('📝 Entry status:', entryStatus)
 
       const entryData = {
-    auditStaffId: staffData.id,
-  auditStaffName: auditStaffName,
-  location: selectedLocation,
-  skuId: inventoryData.skuId,
-  skuName: inventoryData.name,
-  pickingQty: parseFloat(formData.pickingQty) || 0,
-  pickingLocation: formData.pickingLocation || null,
-  bulkQty: parseFloat(formData.bulkQty) || 0,
-  bulkLocation: formData.bulkLocation || null,
-  nearExpiryQty: parseFloat(formData.nearExpiryQty) || 0,
-  nearExpiryLocation: formData.nearExpiryLocation || 'NA',
-  jitQty: parseFloat(formData.jitQty) || 0,
-  jitLocation: formData.jitLocation || 'NA',
-  damagedQty: parseFloat(formData.damagedQty) || 0,
-  damagedLocation: formData.damagedLocation || 'NA',
-  minQtyOdin: parseFloat(formData.minQtyOdin) || 0,
-  blockedQtyOdin: parseFloat(formData.blockedQtyOdin) || 0,
-  maxQtyOdin: parseFloat(formData.maxQtyOdin) || 0,
-  totalQuantityIdentified: totalQuantity,
-  qtyTested: parseFloat(formData.qtyTested) || 0,
-  status: entryStatus,
-  objectionRaised: false,
-  objectionType: null as string | null, // 👈 This is the key fix!
-  assignedClientStaffId: null as string | null,
-  assignedClientStaffName: null as string | null,
-  objectionRemarks: null as string | null
+        auditStaffId: staffData.id,
+        auditStaffName: auditStaffName,
+        location: selectedLocation,
+        skuId: inventoryData.skuId,
+        skuName: inventoryData.name,
+        pickingQty: parseFloat(formData.pickingQty) || 0,
+        pickingLocation: formData.pickingLocation || null,
+        bulkQty: parseFloat(formData.bulkQty) || 0,
+        bulkLocation: formData.bulkLocation || null,
+        nearExpiryQty: parseFloat(formData.nearExpiryQty) || 0,
+        nearExpiryLocation: formData.nearExpiryLocation || 'NA',
+        jitQty: parseFloat(formData.jitQty) || 0,
+        jitLocation: formData.jitLocation || 'NA',
+        damagedQty: parseFloat(formData.damagedQty) || 0,
+        damagedLocation: formData.damagedLocation || 'NA',
+        minQtyOdin: parseFloat(formData.minQtyOdin) || 0,
+        blockedQtyOdin: parseFloat(formData.blockedQtyOdin) || 0,
+        maxQtyOdin: parseFloat(formData.maxQtyOdin) || 0,
+        totalQuantityIdentified: totalQuantity,
+        qtyTested: parseFloat(formData.qtyTested) || 0,
+        status: entryStatus,
+        objectionRaised: false,
+        objectionType: null as string | null,
+        assignedClientStaffId: null as string | null,
+        assignedClientStaffName: null as string | null,
+        objectionRemarks: null as string | null
       }
 
       if (needsObjection) {
@@ -304,13 +304,14 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
         toast.error('Failed to submit audit entry: ' + errorText)
       }
     } catch (error) {
-  console.error('❌ Exception during submission:', error)
-  if (error instanceof Error) {
-    toast.error('Failed to submit audit entry: ' + error.message)
-  } else {
-    toast.error('Failed to submit audit entry: Unknown error occurred')
+      console.error('❌ Exception during submission:', error)
+      if (error instanceof Error) {
+        toast.error('Failed to submit audit entry: ' + error.message)
+      } else {
+        toast.error('Failed to submit audit entry: Unknown error occurred')
+      }
+    }
   }
-}}
 
   const handleObjectionStaffChange = (value: string) => {
     const selectedStaff = clientStaffOptions.find((staff: any) => staff.id === value)
@@ -403,10 +404,8 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
     return <Badge className={color}>{type}</Badge>
   }
 
- 
-
-  return (
-      if (isLoading) {
+  // ✅ Loading and authentication checks MUST be BEFORE the main return
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -420,8 +419,10 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
   if (!isAuthenticated) {
     return null
   }
-  
-     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
+
+  // ✅ This is the main return statement with ONLY JSX
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       <div className="border-b bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -767,21 +768,21 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                  {raisedObjections.length > 0 && raisedObjections.map((query) => (
-  <TableRow key={query.id}>
-    <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-    <TableCell>{query.location}</TableCell>
-    <TableCell>{query.auditStaffName}</TableCell>
-    <TableCell>{query.skuId}</TableCell>
-    <TableCell className="max-w-xs truncate">{query.skuName}</TableCell>
-    <TableCell>{query.totalQuantityIdentified}</TableCell>
-    <TableCell>{query.maxQtyOdin}</TableCell>
-    <TableCell>{getObjectionTypeBadge(query.objectionType)}</TableCell>
-    <TableCell>{query.assignedClientStaffName || '-'}</TableCell>
-    <TableCell className="max-w-xs truncate">{query.objectionRemarks || '-'}</TableCell>
-    <TableCell>{getStatusBadge(query.status)}</TableCell>
-  </TableRow>
-))}                
+                    {raisedObjections.length > 0 && raisedObjections.map((query) => (
+                      <TableRow key={query.id}>
+                        <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{query.location}</TableCell>
+                        <TableCell>{query.auditStaffName}</TableCell>
+                        <TableCell>{query.skuId}</TableCell>
+                        <TableCell className="max-w-xs truncate">{query.skuName}</TableCell>
+                        <TableCell>{query.totalQuantityIdentified}</TableCell>
+                        <TableCell>{query.maxQtyOdin}</TableCell>
+                        <TableCell>{getObjectionTypeBadge(query.objectionType)}</TableCell>
+                        <TableCell>{query.assignedClientStaffName || '-'}</TableCell>
+                        <TableCell className="max-w-xs truncate">{query.objectionRemarks || '-'}</TableCell>
+                        <TableCell>{getStatusBadge(query.status)}</TableCell>
+                      </TableRow>
+                    ))}
                     {raisedObjections.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
