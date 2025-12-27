@@ -295,10 +295,13 @@ export default function AuditClerk2Page() {
         toast.error('Failed to submit audit entry: ' + errorText)
       }
     } catch (error) {
-      console.error('❌ Exception during submission:', error)
-      toast.error('Failed to submit audit entry: ' + error.message)
-    }
+  console.error('❌ Exception during submission:', error)
+  if (error instanceof Error) {
+    toast.error('Failed to submit audit entry: ' + error.message)
+  } else {
+    toast.error('Failed to submit audit entry: Unknown error occurred')
   }
+}
 
   const handleObjectionStaffChange = (value: string) => {
     const selectedStaff = clientStaffOptions.find((staff: any) => staff.id === value)
