@@ -173,7 +173,7 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
-        toast.success(`${type.charAt(0).toUpperCase() + ${type.slice(1)} staff added successfully`)
+       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff added successfully`)
         setIsAddDialogOpen(false)
         setIsEditDialogOpen(false)
         setSelectedStaff(null)
