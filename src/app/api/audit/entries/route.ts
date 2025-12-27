@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
   await connectToMongoDB()
 
   try {
-    const { searchParams } = new URL(request.url).searchParams
-    const auditStaffId = searchParams.get('auditStaffId')
+    const searchParams = request.nextUrl.searchParams
+const auditStaffId = searchParams.get('auditStaffId')
 
     if (!auditStaffId) {
       return NextResponse.json({ error: 'Missing audit staff ID' }, { status: 400 })
