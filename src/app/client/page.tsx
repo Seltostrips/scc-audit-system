@@ -36,9 +36,11 @@ type Query = {
 export default function ClientDashboard() {
   const router = useRouter()
 
-  const [clientStaffId, setClientStaffId] = useState('')
-  const [clientStaffName, setClientStaffName] = useState('')
-  const [location, setLocation] = useState('')
+ const [clientStaffId, setClientStaffId] = useState('')
+const [clientStaffName, setClientStaffName] = useState('')
+const [location, setLocation] = useState('')
+const [isLoading, setIsLoading] = useState(true)
+const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const [assignedQueries, setAssignedQueries] = useState<Query[]>([])
   const [completedEntries, setCompletedEntries] = useState<Query[]>([])
@@ -54,21 +56,33 @@ export default function ClientDashboard() {
 
   // Sync sessionStorage to state when window becomes available
   useEffect(() => {
+  const checkAuth = () => {
     if (typeof window !== 'undefined') {
-      setClientStaffId(sessionStorage.getItem('clientStaffId') || '')
-      setClientStaffName(sessionStorage.getItem('clientStaffName') || '')
-      setLocation(sessionStorage.getItem('clientLocation') || '')
+      const staffId = sessionStorage.getItem('clientStaffId')
+      const staffName = sessionStorage.getItem('clientStaffName')
+      const clientLocation = sessionStorage.getItem('clientLocation')
+      
+      if (staffId && staffName && clientLocation) {
+        setClientStaffId(staffId)
+        setClientStaffName(staffName)
+        setLocation(clientLocation)
+        setIsAuthenticated(true)
+      } else {
+        toast.error('Please login first')
+        router.push('/')
+      }
     }
-  }, [])
+    setIsLoading(false)
+  }
+
+  checkAuth()
+}, [])
 
   useEffect(() => {
-    if (!clientStaffId || clientStaffId === '') {
-      toast.error('Please login first')
-      router.push('/')
-      return
-    }
+  if (isAuthenticated) {
     loadQueries()
-  }, [clientStaffId, location, statusFilter])
+  }
+}, [isAuthenticated, selectedLocation, statusFilter])
 
   const loadQueries = async () => {
     console.log('=== Load Queries ===')
@@ -175,6 +189,20 @@ export default function ClientDashboard() {
   }
 
   return (
+    if (isLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+if (!isAuthenticated) {
+  return null
+}
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       <div className="border-b bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
