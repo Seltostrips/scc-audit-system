@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   await connectToMongoDB()
 
   try {
-    const { searchParams } = new URL(request.url).searchParams
+   const searchParams = new URL(request.url).searchParams
     const staffId = searchParams.get('staffId')
 
     if (!staffId) {
