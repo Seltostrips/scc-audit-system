@@ -24,80 +24,58 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false)
 
-const handleSubmit = async () => {
-  setIsLoading(true)
+  const handleSubmit = async () => {
+    setIsLoading(true)
 
-  try {
-    let endpoint = ''
-    let body = {}
+    try {
+      let endpoint = ''
+      let body = {}
 
-    if (role === 'audit') {
-      endpoint = '/api/auth/audit-clerk'
-      body = {
-        auditCredentials: {
-          staffId: credentials.auditStaffId,
-          pin: credentials.pin
+      if (role === 'audit') {
+        endpoint = '/api/auth/audit-clerk'
+        body = {
+          auditCredentials: {
+            staffId: credentials.auditStaffId,
+            pin: credentials.pin
+          }
+        }
+      } else if (role === 'client') {
+        endpoint = '/api/auth/client-staff'
+        body = {
+          clientCredentials: {
+            staffId: credentials.clientStaffId,
+            pin: credentials.clientPin
+          }
+        }
+      } else if (role === 'admin') {
+        endpoint = '/api/auth/admin'
+        body = {
+          username: credentials.adminUsername,
+          password: credentials.adminPassword,
+          action: 'login'
         }
       }
-    } else if (role === 'client') {
-      endpoint = '/api/auth/client-staff'
-      body = {
-        clientCredentials: {
-          staffId: credentials.clientStaffId,
-          pin: credentials.clientPin
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        // Store session in sessionStorage
+        if (role === 'audit') {
+          sessionStorage.setItem('auditStaffId', credentials.auditStaffId)
+          sessionStorage.setItem('auditStaffName', data.name)
+        } else if (role === 'client') {
+          sessionStorage.setItem('clientStaffId', credentials.clientStaffId)
+          sessionStorage.setItem('clientStaffName', data.name)
+          sessionStorage.setItem('clientLocation', data.location || 'Noida WH')
+        } else if (role === 'admin') {
+          sessionStorage.setItem('isAdmin', 'true')
         }
-      }
-    } else if (role === 'admin') {
-      endpoint = '/api/auth/admin'
-      body = {
-        username: credentials.adminUsername,
-        password: credentials.adminPassword,
-        action: 'login'
-      }
-    }
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-
-    const data = await response.json()
-
-    if (response.ok && data.success) {
-      // Store session in sessionStorage
-      if (role === 'audit') {
-        sessionStorage.setItem('auditStaffId', credentials.auditStaffId)
-        sessionStorage.setItem('auditStaffName', data.name)
-      } else if (role === 'client') {
-        sessionStorage.setItem('clientStaffId', credentials.clientStaffId)
-        sessionStorage.setItem('clientStaffName', data.name)
-        sessionStorage.setItem('clientLocation', data.location || 'Noida WH')
-      } else if (role === 'admin') {
-        sessionStorage.setItem('isAdmin', 'true')
-      }
-
-      toast.success(`Login successful as ${role.charAt(0).toUpperCase() + role.slice(1)}`)
-
-      // Redirect based on role
-      if (role === 'audit') {
-        router.push('/audit_clerk_2')
-      } else if (role === 'client') {
-        router.push('/client')
-      } else if (role === 'admin') {
-        router.push('/admin')
-      }
-    } else {
-      const errorMessage = data.error || 'Login failed'
-      toast.error(errorMessage)
-    }
-  } catch (error) {
-    console.error('Login error:', error)
-    toast.error('An error occurred. Please try again.')
-  } finally {
-    setIsLoading(false)
-  }
-} // ← This closing brace must exist!
 
         toast.success(`Login successful as ${role.charAt(0).toUpperCase() + role.slice(1)}`)
 
