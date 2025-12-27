@@ -367,7 +367,7 @@ export default function AuditClerk2Page() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string) => {
     const statusColors: Record<string, string> = {
       'Draft': 'bg-gray-500',
       'Submitted': 'bg-blue-500',
