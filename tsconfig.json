@@ -10,7 +10,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+        "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
   },
   "include": [
     "next-env.d.ts",
