@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
 
     if (action === 'add') {
       if (type === 'audit') {
-        const lastStaff = await AuditStaff.findOne().sort({ _id: -1 })
-        const staffId = (parseInt(lastStaff?.staffId) || 0) + 1
+const lastStaff = await AuditStaff.findOne().sort({ _id: -1 })
+const staffId = (parseInt(lastStaff?.staffId || '0') || 0) + 1
 
         const newStaff = await AuditStaff.create({
           staffId: staffId.toString(),
