@@ -250,7 +250,17 @@ export default function ClientDashboard() {
                 </div>
                 <div className="space-y-2">
                   <Label>Status Filter</Label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                // At the top of your component, define the type
+type StatusFilter = "Submitted" | "Approved" | "Rejected" | "Resubmitted" | "Completed" | "all";
+
+// In your useState
+const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+// In your Select component
+<Select 
+  value={statusFilter} 
+  onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
