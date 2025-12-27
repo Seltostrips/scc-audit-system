@@ -403,23 +403,23 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
     return <Badge className={color}>{type}</Badge>
   }
 
+  if (isLoading) {
   return (
-      if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4">Loading...</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4">Loading...</p>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
-  if (!isAuthenticated) {
-    return null
-  }
-  
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
+if (!isAuthenticated) {
+  return null
+}
+
+  return (
+     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       <div className="border-b bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
