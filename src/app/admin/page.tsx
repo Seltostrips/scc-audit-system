@@ -100,7 +100,7 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
-        toast.success(`${type.charAt(0).toUpperCase() + ${type.slice(1)} staff deleted successfully`)
+ toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff deleted successfully`)
         await loadData()
       } else {
         toast.error('Failed to delete staff')
