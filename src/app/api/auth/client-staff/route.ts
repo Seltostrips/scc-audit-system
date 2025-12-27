@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
       success: true,
       id: staff.id,
       staffId: staff.staffId,
-      name: staff.name
+      name: staff.name,
+       location: staff.location
     })
   } catch (error: any) {
     console.error('Client staff login error:', error)
