@@ -17,7 +17,8 @@ export default function AuditClerk2Page() {
   const router = useRouter()
 
   // Session loading state
-  const [isSessionLoaded, setIsSessionLoaded] = useState(false)
+ const [isLoading, setIsLoading] = useState(true)
+const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const [auditStaffId, setAuditStaffId] = useState('')
   const [auditStaffName, setAuditStaffName] = useState('')
@@ -56,26 +57,34 @@ export default function AuditClerk2Page() {
   const [raisedObjections, setRaisedObjections] = useState<any[]>([])
 
   // Sync sessionStorage to state when window becomes available
-  useEffect(() => {
+ useEffect(() => {
+  const checkAuth = () => {
     if (typeof window !== 'undefined') {
-      setAuditStaffId(sessionStorage.getItem('auditStaffId') || '')
-      setAuditStaffName(sessionStorage.getItem('auditStaffName') || '')
-      setIsSessionLoaded(true)
+      const staffId = sessionStorage.getItem('auditStaffId')
+      const staffName = sessionStorage.getItem('auditStaffName')
+      
+      if (staffId && staffName) {
+        setAuditStaffId(staffId)
+        setAuditStaffName(staffName)
+        setIsAuthenticated(true)
+      } else {
+        toast.error('Please login first')
+        router.push('/')
+      }
     }
-  }, [])
+    setIsLoading(false)
+  }
+
+  checkAuth()
+}, [])
 
   // Only check authentication AFTER session is loaded
   useEffect(() => {
-    if (!isSessionLoaded) {
-      return
-    }
-    if (!auditStaffId || auditStaffId === '') {
-      toast.error('Please login first')
-      router.push('/')
-      return
-    }
+  if (isAuthenticated) {
     loadMyEntries()
-  }, [isSessionLoaded, auditStaffId])
+  }
+}, [isAuthenticated])
+ 
 
   const handleSearchSKU = async () => {
     if (!skuId) {
@@ -744,6 +753,20 @@ export default function AuditClerk2Page() {
                     {raisedObjections.length > 0 && raisedObjections.map((query) => {
                       const qtyDiff = query.totalQuantityIdentified - query.maxQtyOdin
                       return (
+                        if (isLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+if (!isAuthenticated) {
+  return null
+}
                         <TableRow key={query.id}>
                           <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell>{query.location}</TableCell>
