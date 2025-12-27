@@ -403,22 +403,24 @@ const [isAuthenticated, setIsAuthenticated] = useState(false)
     return <Badge className={color}>{type}</Badge>
   }
 
-  if (isLoading) {
+ 
+
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-4">Loading...</p>
+      if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4">Loading...</p>
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
-if (!isAuthenticated) {
-  return null
-}
-
-  return (
+  if (!isAuthenticated) {
+    return null
+  }
+  
      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       <div className="border-b bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
@@ -765,39 +767,21 @@ if (!isAuthenticated) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                   {raisedObjections.length > 0 && raisedObjections.map((query) => {
-  // const qtyDiff = query.totalQuantityIdentified - query.maxQtyOdin // You don't use this variable
-  return (
-    <TableRow key={query.id}>
-      <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-      <TableCell>{query.location}</TableCell>
-      <TableCell>{query.auditStaffName}</TableCell>
-      <TableCell>{query.skuId}</TableCell>
-      <TableCell className="max-w-xs truncate">{query.skuName}</TableCell>
-      <TableCell>{query.totalQuantityIdentified}</TableCell>
-      <TableCell>{query.maxQtyOdin}</TableCell>
-      <TableCell>{getObjectionTypeBadge(query.objectionType)}</TableCell>
-      <TableCell>{query.assignedClientStaffName || '-'}</TableCell>
-      <TableCell className="max-w-xs truncate">{query.objectionRemarks || '-'}</TableCell>
-      <TableCell>{getStatusBadge(query.status)}</TableCell>
-    </TableRow>
-  )
-})}
-                     <TableRow key={query.id}>
-                          <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>{query.location}</TableCell>
-                          <TableCell>{query.auditStaffName}</TableCell>
-                          <TableCell>{query.skuId}</TableCell>
-                          <TableCell className="max-w-xs truncate">{query.skuName}</TableCell>
-                          <TableCell>{query.totalQuantityIdentified}</TableCell>
-                          <TableCell>{query.maxQtyOdin}</TableCell>
-                          <TableCell>{getObjectionTypeBadge(query.objectionType)}</TableCell>
-                          <TableCell>{query.assignedClientStaffName || '-'}</TableCell>
-                          <TableCell className="max-w-xs truncate">{query.objectionRemarks || '-'}</TableCell>
-                          <TableCell>{getStatusBadge(query.status)}</TableCell>
-                        </TableRow>
-                      )
-                    })}
+                  {raisedObjections.length > 0 && raisedObjections.map((query) => (
+  <TableRow key={query.id}>
+    <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
+    <TableCell>{query.location}</TableCell>
+    <TableCell>{query.auditStaffName}</TableCell>
+    <TableCell>{query.skuId}</TableCell>
+    <TableCell className="max-w-xs truncate">{query.skuName}</TableCell>
+    <TableCell>{query.totalQuantityIdentified}</TableCell>
+    <TableCell>{query.maxQtyOdin}</TableCell>
+    <TableCell>{getObjectionTypeBadge(query.objectionType)}</TableCell>
+    <TableCell>{query.assignedClientStaffName || '-'}</TableCell>
+    <TableCell className="max-w-xs truncate">{query.objectionRemarks || '-'}</TableCell>
+    <TableCell>{getStatusBadge(query.status)}</TableCell>
+  </TableRow>
+))}                
                     {raisedObjections.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
