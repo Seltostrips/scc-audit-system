@@ -367,7 +367,7 @@ export default function AuditClerk2Page() {
     }
   }
 
-    const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string) => {
     const statusColors: Record<string, string> = {
       'Draft': 'bg-gray-500',
       'Submitted': 'bg-blue-500',
@@ -634,8 +634,7 @@ export default function AuditClerk2Page() {
                             </Select>
                           </div>
                         </div>
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
+                        <div className="space-y-2">
                           <Label>Objection Remarks</Label>
                           <Textarea
                             value={objectionData.objectionRemarks}
@@ -645,8 +644,7 @@ export default function AuditClerk2Page() {
                             required
                           />
                         </div>
-                      </div>
-                    </CardContent>
+                      </CardContent>
                     </Card>
                   )}
                   <div className="flex gap-4">
