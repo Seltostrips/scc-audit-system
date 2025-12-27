@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Account is inactive' }, { status: 403 })
     }
 
-    return NextResponse.json({
-      success: true,
-      id: staff._id.toString(),
-      staffId: staff.staffId,
-      name: staff.name
-    })
+  return NextResponse.json({
+  success: true,
+  id: staff.id, // ✅ Use explicit 'id' field
+  staffId: staff.staffId,
+  name: staff.name
+})
   } catch (error: any) {
     console.error('Audit clerk login error:', error)
     return NextResponse.json({ error: 'Login failed' }, { status: 500 })
