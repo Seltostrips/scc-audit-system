@@ -9,15 +9,15 @@ datasource db {
   provider = "mongodb"
   // IMPORTANT: Put your MongoDB Connection String here or in .env
   // Example: url = env("DATABASE_URL")
-  url      = "mongodb+srv://<username>:<password>@cluster0.mongodb.net/scc-audit-system?retryWrites=true&w=majorityApp"
+  url      = env("mongodb+srv://scc-admin:1dA2WhykZD0B6cWS@cluster0.tfrunk2.mongodb.net/?appName=Cluster0&retryWrites=true&w=majorityApp")
 }
 
 // COLLECTION 1: Staff Members
 // Used to store the list of auditors
-model Staff {
+model AuditStaff {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   staffId       String   @unique // The internal ID (e.g., "AUD-001")
-  name          String   // The display name
+  name          String   
   role          String?  @default("audit_clerk")
   createdAt     DateTime @default(now())
 }
