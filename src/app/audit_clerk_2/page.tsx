@@ -226,9 +226,8 @@ export default function AuditClerk2Page() {
     totalQuantityIdentified: totalQuantity,
     qtyTested: parseFloat(formData.qtyTested) || 0,
     status: entryStatus,
-         objectionRaised: false,
-    objectionType: null,
-    assignedClientStaffId: null,
+      objectionRaised: false,
+     assignedClientStaffId: null,
     assignedClientStaffName: null,
     objectionRemarks: null
       }
