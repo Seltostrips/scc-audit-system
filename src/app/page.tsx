@@ -39,22 +39,20 @@ export default function LoginPage() {
             pin: credentials.pin
           }
         }
-      } else if (role === 'client') {
-        endpoint = '/api/auth/client-staff'
-        body = {
-          clientCredentials: {
-            staffId: credentials.clientStaffId,
-            pin: credentials.clientPin
-          }
-        }
-      } else if (role === 'admin') {
+     } else if (role === 'client') {
+  sessionStorage.setItem('clientStaffId', credentials.clientStaffId)
+  sessionStorage.setItem('clientStaffName', data.name)
+  sessionStorage.setItem('clientLocation', data.location || 'Noida WH')
+}
+        
+       else if (role === 'admin') {
         endpoint = '/api/auth/admin'
         body = {
           username: credentials.adminUsername,
           password: credentials.adminPassword,
           action: 'login'
         }
-      }
+      }}
 
       const response = await fetch(endpoint, {
         method: 'POST',
