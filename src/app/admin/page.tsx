@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, RefreshCw, Download, Upload, FileSpreadsheet, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Download, Upload, CheckCircle, XCircle, AlertCircle, Users, UserCheck, Package, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Staff = {
@@ -136,118 +136,141 @@ export default function AdminDashboard() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      'Draft': 'bg-gray-500',
-      'Submitted': 'bg-blue-500',
-      'Approved': 'bg-green-500',
-      'Rejected': 'bg-red-500',
-      'Resubmitted': 'bg-yellow-500',
-      'Completed': 'bg-gray-400',
-      'Closed': 'bg-purple-500',
+    const statusConfig: Record<string, { color: string; icon?: React.ReactNode }> = {
+      'Draft': { color: 'bg-slate-500' },
+      'Submitted': { color: 'bg-blue-500' },
+      'Approved': { color: 'bg-emerald-500' },
+      'Rejected': { color: 'bg-red-500' },
+      'Resubmitted': { color: 'bg-amber-500' },
+      'Completed': { color: 'bg-slate-400' },
+      'Closed': { color: 'bg-purple-500' },
     }
-    return <Badge className={statusColors[status] || 'bg-gray-500'}>{status}</Badge>
+    const config = statusConfig[status] || statusConfig['Draft']
+    return <Badge className={config.color}>{status}</Badge>
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto p-6 max-w-7xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => router.push('/')}
-              size="sm"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Admin Dashboard</h1>
-              <p className="text-slate-600 dark:text-slate-400">Manage audit clerks, client staff, and inventory</p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            onClick={loadData}
-            disabled={isUploading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isUploading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
+  const statsCards = [
+    {
+      title: 'Total Audit Staff',
+      value: auditStaff.length,
+      icon: UserCheck,
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-50 dark:bg-blue-950/20'
+    },
+    {
+      title: 'Total Client Staff',
+      value: clientStaff.length,
+      icon: Users,
+      color: 'from-emerald-500 to-emerald-600',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-950/20'
+    },
+    {
+      title: 'Total SKUs',
+      value: inventory.length,
+      icon: Package,
+      color: 'from-purple-500 to-purple-600',
+      bgColor: 'bg-purple-50 dark:bg-purple-950/20'
+    },
+    {
+      title: 'Total Queries',
+      value: queries.length,
+      icon: FileText,
+      color: 'from-amber-500 to-amber-600',
+      bgColor: 'bg-amber-50 dark:bg-amber-950/20'
+    }
+  ]
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-white dark:bg-slate-800 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                Total Audit Staff
-              </CardDescription>
-              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                {auditStaff.length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white dark:bg-slate-800 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                Total Client Staff
-              </CardDescription>
-              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                {clientStaff.length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white dark:bg-slate-800 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                Total SKUs
-              </CardDescription>
-              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                {inventory.length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white dark:bg-slate-800 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                Total Queries
-              </CardDescription>
-              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                {queries.length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      {/* Header */}
+      <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/')}
+                size="sm"
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Admin Dashboard</h1>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Manage staff and inventory</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={loadData}
+              disabled={isUploading}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isUploading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto p-4 md:p-6 max-w-7xl">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {statsCards.map((card, index) => {
+            const Icon = card.icon
+            return (
+              <Card key={index} className={`${card.bgColor} border-2 hover:shadow-lg transition-shadow duration-200`}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardDescription className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {card.title}
+                    </CardDescription>
+                    <div className={`p-2 rounded-lg bg-gradient-to-br ${card.color}`}>
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+                    {card.value}
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+            )
+          })}
         </div>
 
         {/* Tabs */}
-        <Card className="bg-white dark:bg-slate-800 shadow-sm mb-6">
-          <CardContent className="p-4">
-            <div className="flex gap-2">
+        <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm mb-6">
+          <CardContent className="p-2">
+            <div className="flex flex-wrap gap-2">
               {[
-                { value: 'overview', label: 'Overview' },
-                { value: 'audit-staff', label: 'Audit Staff' },
-                { value: 'client-staff', label: 'Client Staff' },
-                { value: 'inventory', label: 'Inventory' },
-                { value: 'queries', label: 'All Queries' },
-              ].map((tab) => (
-                <Button
-                  key={tab.value}
-                  variant={activeTab === tab.value ? 'default' : 'ghost'}
-                  onClick={() => setActiveTab(tab.value as any)}
-                  className="flex-1"
-                >
-                  {tab.label}
-                </Button>
-              ))}
+                { value: 'overview', label: 'Overview', icon: FileText },
+                { value: 'audit-staff', label: 'Audit Staff', icon: UserCheck },
+                { value: 'client-staff', label: 'Client Staff', icon: Users },
+                { value: 'inventory', label: 'Inventory', icon: Package },
+                { value: 'queries', label: 'All Queries', icon: FileText },
+              ].map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.value
+                return (
+                  <Button
+                    key={tab.value}
+                    variant={isActive ? 'default' : 'ghost'}
+                    onClick={() => setActiveTab(tab.value as any)}
+                    className={`flex-1 min-w-fit gap-2 ${isActive ? 'shadow-md' : ''}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </Button>
+                )
+              })}
             </div>
           </CardContent>
         </Card>
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
             <CardHeader>
               <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 Recent Queries
@@ -256,35 +279,39 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {queries.slice(0, 5).length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Auditor</TableHead>
-                      <TableHead>SKU ID</TableHead>
-                      <TableHead>SKU Name</TableHead>
-                      <TableHead>Total Qty</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {queries.slice(0, 5).map((query) => (
-                      <TableRow key={query._id}>
-                        <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>{query.location}</TableCell>
-                        <TableCell>{query.auditStaffName}</TableCell>
-                        <TableCell>{query.skuId}</TableCell>
-                        <TableCell>{query.skuName}</TableCell>
-                        <TableCell>{query.totalQuantityIdentified}</TableCell>
-                        <TableCell>{getStatusBadge(query.status)}</TableCell>
+                <div className="rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 dark:bg-slate-800">
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Location</TableHead>
+                        <TableHead className="font-semibold">Auditor</TableHead>
+                        <TableHead className="font-semibold">SKU ID</TableHead>
+                        <TableHead className="font-semibold">SKU Name</TableHead>
+                        <TableHead className="font-semibold">Total Qty</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {queries.slice(0, 5).map((query) => (
+                        <TableRow key={query._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <TableCell className="text-sm">{new Date(query.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-sm">{query.location}</TableCell>
+                          <TableCell className="text-sm">{query.auditStaffName}</TableCell>
+                          <TableCell className="text-sm font-medium">{query.skuId}</TableCell>
+                          <TableCell className="text-sm max-w-xs truncate">{query.skuName}</TableCell>
+                          <TableCell className="text-sm font-medium">{query.totalQuantityIdentified}</TableCell>
+                          <TableCell>{getStatusBadge(query.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                  No queries yet
+                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">No queries yet</p>
+                  <p className="text-sm mt-1">Start by adding audit staff and inventory</p>
                 </div>
               )}
             </CardContent>
@@ -294,49 +321,62 @@ export default function AdminDashboard() {
         {/* Audit Staff Tab */}
         {activeTab === 'audit-staff' && (
           <div className="space-y-6">
-            <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  CSV Upload - Audit Staff
+                  Manage Audit Staff
                 </CardTitle>
-                <CardDescription>
-                  Upload a CSV file to bulk import audit staff members
-                </CardDescription>
+                <CardDescription>Upload a CSV file to bulk import audit staff members</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* CSV Format Info */}
-                <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Required CSV Format:</h3>
-                  <code className="text-sm text-slate-600 dark:text-slate-400 block mb-2">
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    Required CSV Format:
+                  </h3>
+                  <code className="text-sm text-slate-700 dark:text-slate-300 block mb-3 font-mono bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                     staffId,name,pin,locations
                   </code>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                    Example: <code>AUD-001,John Doe,1234,"Noida WH,Mumbai WH"</code>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+                    Example: <code className="bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">AUD-001,John Doe,1234,"Noida WH,Mumbai WH"</code>
                   </p>
-                  <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1">
-                    <li><strong>staffId:</strong> Unique ID (e.g., AUD-001)</li>
-                    <li><strong>name:</strong> Full name of the staff</li>
-                    <li><strong>pin:</strong> 4-digit PIN (will be hashed)</li>
-                    <li><strong>locations:</strong> Comma-separated list of locations (optional)</li>
+                  <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">staffId:</strong> Unique ID (e.g., AUD-001)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">name:</strong> Full name of the staff</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">pin:</strong> 4-digit PIN (will be hashed)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">locations:</strong> Comma-separated list (optional)</span>
+                    </li>
                   </ul>
                 </div>
 
-                {/* Download Template Button */}
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex gap-3">
                   <Button
                     onClick={() => handleDownloadTemplate('audit-staff')}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 gap-2"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4" />
                     Download Template
                   </Button>
                   <Button
                     onClick={() => document.getElementById('audit-staff-upload')?.click()}
                     disabled={isUploading}
-                    className="flex-1"
+                    className="flex-1 gap-2"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-4 w-4" />
                     {isUploading ? 'Uploading...' : 'Upload CSV'}
                   </Button>
                 </div>
@@ -350,13 +390,13 @@ export default function AdminDashboard() {
 
                 {/* Upload Results */}
                 {uploadResults && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                       <CheckCircle className="h-5 w-5" />
                       <span className="font-medium">Added: {uploadResults.results?.added || 0} records</span>
                     </div>
                     {uploadResults.results?.skipped > 0 && (
-                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                         <AlertCircle className="h-5 w-5" />
                         <span className="font-medium">Skipped: {uploadResults.results.skipped} duplicates</span>
                       </div>
@@ -371,43 +411,47 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Existing Staff Table */}
-                <div className="mt-6">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                    Existing Audit Staff ({auditStaff.length})
-                  </h3>
-                  <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>SCC ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Locations</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {auditStaff.map((staff) => (
-                          <TableRow key={staff._id}>
-                            <TableCell className="font-medium">{staff.staffId}</TableCell>
-                            <TableCell>{staff.name}</TableCell>
-                            <TableCell>
-                              {staff.locations?.map((loc) => (
-                                <Badge key={loc} variant="outline" className="mr-1 mb-1">
-                                  {loc}
-                                </Badge>
-                              ))}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={staff.isActive ? 'bg-green-500' : 'bg-red-500'}>
-                                {staff.isActive ? 'Active' : 'Inactive'}
-                              </Badge>
-                            </TableCell>
+                {auditStaff.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                      Existing Audit Staff ({auditStaff.length})
+                    </h3>
+                    <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-slate-50 dark:bg-slate-800">
+                            <TableHead className="font-semibold">SCC ID</TableHead>
+                            <TableHead className="font-semibold">Name</TableHead>
+                            <TableHead className="font-semibold">Locations</TableHead>
+                            <TableHead className="font-semibold">Status</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {auditStaff.map((staff) => (
+                            <TableRow key={staff._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                              <TableCell className="font-medium">{staff.staffId}</TableCell>
+                              <TableCell>{staff.name}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
+                                  {staff.locations?.map((loc) => (
+                                    <Badge key={loc} variant="outline" className="text-xs">
+                                      {loc}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={staff.isActive ? 'bg-emerald-500' : 'bg-red-500'}>
+                                  {staff.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -416,49 +460,62 @@ export default function AdminDashboard() {
         {/* Client Staff Tab */}
         {activeTab === 'client-staff' && (
           <div className="space-y-6">
-            <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  CSV Upload - Client Staff
+                  Manage Client Staff
                 </CardTitle>
-                <CardDescription>
-                  Upload a CSV file to bulk import client staff members
-                </CardDescription>
+                <CardDescription>Upload a CSV file to bulk import client staff members</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* CSV Format Info */}
-                <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Required CSV Format:</h3>
-                  <code className="text-sm text-slate-600 dark:text-slate-400 block mb-2">
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Required CSV Format:
+                  </h3>
+                  <code className="text-sm text-slate-700 dark:text-slate-300 block mb-3 font-mono bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                     staffId,name,pin,location
                   </code>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                    Example: <code>CLI-001,Amit Kumar,4321,Noida WH</code>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+                    Example: <code className="bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">CLI-001,Amit Kumar,4321,Noida WH</code>
                   </p>
-                  <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1">
-                    <li><strong>staffId:</strong> Unique ID (e.g., CLI-001)</li>
-                    <li><strong>name:</strong> Full name of the staff</li>
-                    <li><strong>pin:</strong> 4-digit PIN (will be hashed)</li>
-                    <li><strong>location:</strong> Assigned location</li>
+                  <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">staffId:</strong> Unique ID (e.g., CLI-001)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">name:</strong> Full name of staff</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">pin:</strong> 4-digit PIN (will be hashed)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">location:</strong> Assigned location</span>
+                    </li>
                   </ul>
                 </div>
 
-                {/* Download Template Button */}
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex gap-3">
                   <Button
                     onClick={() => handleDownloadTemplate('client-staff')}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 gap-2"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4" />
                     Download Template
                   </Button>
                   <Button
                     onClick={() => document.getElementById('client-staff-upload')?.click()}
                     disabled={isUploading}
-                    className="flex-1"
+                    className="flex-1 gap-2"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-4 w-4" />
                     {isUploading ? 'Uploading...' : 'Upload CSV'}
                   </Button>
                 </div>
@@ -472,13 +529,13 @@ export default function AdminDashboard() {
 
                 {/* Upload Results */}
                 {uploadResults && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                       <CheckCircle className="h-5 w-5" />
                       <span className="font-medium">Added: {uploadResults.results?.added || 0} records</span>
                     </div>
                     {uploadResults.results?.skipped > 0 && (
-                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                         <AlertCircle className="h-5 w-5" />
                         <span className="font-medium">Skipped: {uploadResults.results.skipped} duplicates</span>
                       </div>
@@ -493,37 +550,39 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Existing Staff Table */}
-                <div className="mt-6">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                    Existing Client Staff ({clientStaff.length})
-                  </h3>
-                  <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>SCC ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {clientStaff.map((staff) => (
-                          <TableRow key={staff._id}>
-                            <TableCell className="font-medium">{staff.staffId}</TableCell>
-                            <TableCell>{staff.name}</TableCell>
-                            <TableCell>{staff.location}</TableCell>
-                            <TableCell>
-                              <Badge className={staff.isActive ? 'bg-green-500' : 'bg-red-500'}>
-                                {staff.isActive ? 'Active' : 'Inactive'}
-                              </Badge>
-                            </TableCell>
+                {clientStaff.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                      Existing Client Staff ({clientStaff.length})
+                    </h3>
+                    <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-slate-50 dark:bg-slate-800">
+                            <TableHead className="font-semibold">SCC ID</TableHead>
+                            <TableHead className="font-semibold">Name</TableHead>
+                            <TableHead className="font-semibold">Location</TableHead>
+                            <TableHead className="font-semibold">Status</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {clientStaff.map((staff) => (
+                            <TableRow key={staff._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                              <TableCell className="font-medium">{staff.staffId}</TableCell>
+                              <TableCell>{staff.name}</TableCell>
+                              <TableCell>{staff.location}</TableCell>
+                              <TableCell>
+                                <Badge className={staff.isActive ? 'bg-emerald-500' : 'bg-red-500'}>
+                                  {staff.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -532,52 +591,66 @@ export default function AdminDashboard() {
         {/* Inventory Tab */}
         {activeTab === 'inventory' && (
           <div className="space-y-6">
-            <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  CSV Upload - Inventory
+                  Manage Inventory
                 </CardTitle>
-                <CardDescription>
-                  Upload a CSV file to bulk import inventory items
-                </CardDescription>
+                <CardDescription>Upload a CSV file to bulk import inventory items</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* CSV Format Info */}
-                <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Required CSV Format:</h3>
-                  <code className="text-sm text-slate-600 dark:text-slate-400 block mb-2">
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-500" />
+                    Required CSV Format:
+                  </h3>
+                  <code className="text-sm text-slate-700 dark:text-slate-300 block mb-3 font-mono bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                     skuId,name,pickingLocation,bulkLocation,minQtyOdin,blockedQtyOdin,maxQtyOdin
                   </code>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                    Example: <code>657611,Product A,A-1-1,B-1-1,50,5,200</code>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+                    Example: <code className="bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">657611,Product A,A-1-1,B-1-1,50,5,200</code>
                   </p>
-                  <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1">
-                    <li><strong>skuId:</strong> Unique SKU ID (required)</li>
-                    <li><strong>name:</strong> Product name (required)</li>
-                    <li><strong>pickingLocation:</strong> Picking location (optional)</li>
-                    <li><strong>bulkLocation:</strong> Bulk storage location (optional)</li>
-                    <li><strong>minQtyOdin:</strong> Minimum quantity from ODIN (optional, default: 0)</li>
-                    <li><strong>blockedQtyOdin:</strong> Blocked quantity from ODIN (optional, default: 0)</li>
-                    <li><strong>maxQtyOdin:</strong> Maximum quantity from ODIN (optional, default: 0)</li>
+                  <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-purple-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">skuId:</strong> Unique SKU ID (required)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-purple-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">name:</strong> Product name (required)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-purple-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">pickingLocation:</strong> Picking location (optional)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-purple-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">bulkLocation:</strong> Bulk storage location (optional)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-purple-500 mt-0.5">•</span>
+                      <span><strong className="text-slate-900 dark:text-slate-100">min/maxQtyOdin:</strong> ODIN quantities (optional)</span>
+                    </li>
                   </ul>
                 </div>
 
-                {/* Download Template Button */}
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex gap-3">
                   <Button
                     onClick={() => handleDownloadTemplate('inventory')}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 gap-2"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4" />
                     Download Template
                   </Button>
                   <Button
                     onClick={() => document.getElementById('inventory-upload')?.click()}
                     disabled={isUploading}
-                    className="flex-1"
+                    className="flex-1 gap-2"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-4 w-4" />
                     {isUploading ? 'Uploading...' : 'Upload CSV'}
                   </Button>
                 </div>
@@ -591,8 +664,8 @@ export default function AdminDashboard() {
 
                 {/* Upload Results */}
                 {uploadResults && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                       <CheckCircle className="h-5 w-5" />
                       <span className="font-medium">Added: {uploadResults.results?.added || 0} records</span>
                     </div>
@@ -603,7 +676,7 @@ export default function AdminDashboard() {
                       </div>
                     )}
                     {uploadResults.results?.skipped > 0 && (
-                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                         <AlertCircle className="h-5 w-5" />
                         <span className="font-medium">Skipped: {uploadResults.results.skipped} duplicates</span>
                       </div>
@@ -618,39 +691,41 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Existing Inventory Table */}
-                <div className="mt-6">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                    Existing Inventory ({inventory.length})
-                  </h3>
-                  <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>SKU ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Picking Location</TableHead>
-                          <TableHead>Bulk Location</TableHead>
-                          <TableHead>Min Qty</TableHead>
-                          <TableHead>Blocked Qty</TableHead>
-                          <TableHead>Max Qty</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {inventory.map((item) => (
-                          <TableRow key={item._id}>
-                            <TableCell className="font-medium">{item.skuId}</TableCell>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.pickingLocation || '-'}</TableCell>
-                            <TableCell>{item.bulkLocation || '-'}</TableCell>
-                            <TableCell>{item.minQtyOdin || 0}</TableCell>
-                            <TableCell>{item.blockedQtyOdin || 0}</TableCell>
-                            <TableCell>{item.maxQtyOdin || 0}</TableCell>
+                {inventory.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                      Existing Inventory ({inventory.length})
+                    </h3>
+                    <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-slate-50 dark:bg-slate-800">
+                            <TableHead className="font-semibold">SKU ID</TableHead>
+                            <TableHead className="font-semibold">Name</TableHead>
+                            <TableHead className="font-semibold">Picking</TableHead>
+                            <TableHead className="font-semibold">Bulk</TableHead>
+                            <TableHead className="font-semibold">Min</TableHead>
+                            <TableHead className="font-semibold">Blocked</TableHead>
+                            <TableHead className="font-semibold">Max</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {inventory.map((item) => (
+                            <TableRow key={item._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                              <TableCell className="font-medium">{item.skuId}</TableCell>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell className="text-sm">{item.pickingLocation || '-'}</TableCell>
+                              <TableCell className="text-sm">{item.bulkLocation || '-'}</TableCell>
+                              <TableCell className="text-sm">{item.minQtyOdin || 0}</TableCell>
+                              <TableCell className="text-sm">{item.blockedQtyOdin || 0}</TableCell>
+                              <TableCell className="text-sm">{item.maxQtyOdin || 0}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -658,7 +733,7 @@ export default function AdminDashboard() {
 
         {/* Queries Tab */}
         {activeTab === 'queries' && (
-          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
             <CardHeader>
               <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 All Queries
@@ -666,40 +741,48 @@ export default function AdminDashboard() {
               <CardDescription>View and manage all audit entries</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border border-slate-200 dark:border-slate-700">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Auditor</TableHead>
-                      <TableHead>SKU ID</TableHead>
-                      <TableHead>SKU Name</TableHead>
-                      <TableHead>Total Qty</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {queries.map((query) => (
-                      <TableRow key={query._id}>
-                        <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>{query.location}</TableCell>
-                        <TableCell>{query.auditStaffName}</TableCell>
-                        <TableCell>{query.skuId}</TableCell>
-                        <TableCell>{query.skuName}</TableCell>
-                        <TableCell>{query.totalQuantityIdentified}</TableCell>
-                        <TableCell>{getStatusBadge(query.status)}</TableCell>
+              {queries.length > 0 ? (
+                <div className="rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 dark:bg-slate-800">
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Location</TableHead>
+                        <TableHead className="font-semibold">Auditor</TableHead>
+                        <TableHead className="font-semibold">SKU ID</TableHead>
+                        <TableHead className="font-semibold">SKU Name</TableHead>
+                        <TableHead className="font-semibold">Total Qty</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {queries.map((query) => (
+                        <TableRow key={query._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <TableCell className="text-sm">{new Date(query.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-sm">{query.location}</TableCell>
+                          <TableCell className="text-sm">{query.auditStaffName}</TableCell>
+                          <TableCell className="text-sm font-medium">{query.skuId}</TableCell>
+                          <TableCell className="text-sm max-w-xs truncate">{query.skuName}</TableCell>
+                          <TableCell className="text-sm font-medium">{query.totalQuantityIdentified}</TableCell>
+                          <TableCell>{getStatusBadge(query.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">No queries yet</p>
+                  <p className="text-sm mt-1">Start by adding audit staff and inventory</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
 
         {/* Footer */}
-        <footer className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
+        <footer className="mt-8 text-center text-sm text-slate-500 dark:text-slate-500 py-4">
           <p>SCC Audit Management System - Admin Dashboard</p>
         </footer>
       </div>
