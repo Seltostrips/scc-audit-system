@@ -1,68 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ClientStaff, AuditEntry } from '@/lib/models'
-import connectToMongoDB from '@/lib/mongodb'
+import { db } from '@/lib/db'
 
-// GET - Fetch all queries (for admin dashboard)
 export async function GET(request: NextRequest) {
-  await connectToMongoDB()
-
   try {
-    const queries = await AuditEntry.find()
-      .sort({ createdAt: -1 })
-      .lean()
+    const entries = await db.auditEntry.findMany({
+      orderBy: { createdAt: 'desc' }
+    })
 
-    return NextResponse.json(queries)
-  } catch (error: any) {
-    console.error('Fetch queries error:', error)
-    return NextResponse.json({ error: 'Failed to fetch queries' }, { status: 500 })
+    return NextResponse.json(entries)
+  } catch (error) {
+    console.error('Queries fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch queries' },
+      { status: 500 }
+    )
   }
 }
 
-// PUT - Approve or reject query
 export async function PUT(request: NextRequest) {
-  await connectToMongoDB()
-
   try {
-    const body = await request.json()
-    const { id, action, comments } = body
+    const { id, action, comments } = await request.json()
 
     if (!id || !action) {
-      return NextResponse.json({ error: 'Missing query ID or action' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'ID and action are required' },
+        { status: 400 }
+      )
     }
 
-    if (action !== 'Approved' && action !== 'Rejected') {
-      return NextResponse.json({ error: 'Invalid action. Must be "Approved" or "Rejected"' }, { status: 400 })
+    const entry = await db.auditEntry.findUnique({
+      where: { id }
+    })
+
+    if (!entry) {
+      return NextResponse.json(
+        { error: 'Query not found' },
+        { status: 404 }
+      )
     }
 
-    const query = await AuditEntry.findById(id)
-    if (!query) {
-      return NextResponse.json({ error: 'Query not found' }, { status: 404 })
-    }
+    const updatedEntry = await db.auditEntry.update({
+      where: { id },
+      data: {
+        status: action,
+        clientAction: action,
+        clientActionDate: new Date()
+      }
+    })
 
-    const updateData: any = {
-      clientAction: action,
-      clientActionDate: new Date()
-    }
-
-    if (action === 'Approved') {
-      updateData.status = 'Completed'
-      updateData.objectionRaised = false
-      updateData.updatedAt = new Date()
-    } else if (action === 'Rejected') {
-      updateData.status = 'Resubmitted'
-      updateData.clientAction = action
-      updateData.clientActionDate = new Date()
-    }
-
-    if (comments) {
-      updateData.clientActionComments = comments
-    }
-
-    const updatedQuery = await AuditEntry.findByIdAndUpdate(id, updateData)
-
-    return NextResponse.json(updatedQuery)
-  } catch (error: any) {
-    console.error('Update query error:', error)
-    return NextResponse.json({ error: 'Failed to update query' }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      entry: updatedEntry
+    })
+  } catch (error) {
+    console.error('Query update error:', error)
+    return NextResponse.json(
+      { error: 'Failed to update query' },
+      { status: 500 }
+    )
   }
 }
