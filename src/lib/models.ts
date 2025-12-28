@@ -58,8 +58,8 @@ const AuditEntrySchema = new Schema({
   maxQtyOdin: { type: Number, default: 0 },
   totalQuantityIdentified: { type: Number, required: true },
   qtyTested: { type: Number, default: 0 },
-  status: { 
-    type: String, 
+  status: {
+    type: String,
     enum: ['Draft', 'Submitted', 'Approved', 'Rejected', 'Resubmitted', 'Completed', 'Closed'],
     default: 'Draft'
   },
