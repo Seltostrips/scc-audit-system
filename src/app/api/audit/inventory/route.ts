@@ -1,42 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Inventory } from '@/lib/models'
-import connectToMongoDB from '@/lib/mongodb'
+import { db } from '@/lib/db'
 
-// GET - Search SKU
 export async function GET(request: NextRequest) {
-  await connectToMongoDB()
-
   try {
-   const searchParams = new URL(request.url).searchParams
+    const searchParams = request.nextUrl.searchParams
     const skuId = searchParams.get('skuId')
 
     if (!skuId) {
-      return NextResponse.json({ error: 'Missing SKU ID' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'SKU ID is required' },
+        { status: 400 }
+      )
     }
 
-    const inventory = await Inventory.findOne({ skuId })
+    const inventory = await db.inventory.findUnique({
+      where: { skuId: skuId.toUpperCase() }
+    })
+
     if (!inventory) {
-      return NextResponse.json({ error: 'Inventory not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'SKU not found' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json(inventory)
-  } catch (error: any) {
-    console.error('Search inventory error:', error)
-    return NextResponse.json({ error: 'Failed to search inventory' }, { status: 500 })
-  }
-}
-
-// POST - Create inventory
-export async function POST(request: NextRequest) {
-  await connectToMongoDB()
-
-  try {
-    const body = await request.json()
-    const inventory = await Inventory.create(body)
-
-    return NextResponse.json(inventory, { status: 201 })
-  } catch (error: any) {
-    console.error('Create inventory error:', error)
-    return NextResponse.json({ error: 'Failed to create inventory' }, { status: 500 })
+  } catch (error) {
+    console.error('Inventory lookup error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch inventory' },
+      { status: 500 }
+    )
   }
 }
