@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AuditStaff } from '@/lib/models'
-import { connectToMongoDB } from '@/lib/mongodb'
+import connectToMongoDB from '@/lib/mongodb'
 
 export async function GET(request: NextRequest) {
   await connectToMongoDB()
