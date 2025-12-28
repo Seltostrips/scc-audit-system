@@ -2,14 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Inventory } from '@/lib/models'
 import { connectToMongoDB } from '@/lib/mongodb'
 
-// Helper function to parse CSV
+// Helper function to parse CSV (handles quoted values)
 function parseCSV(csvText: string) {
   const lines = csvText.trim().split('\n')
-  const headers = lines[0].split(',').map(h => h.trim())
+  if (lines.length === 0) return []
+
+  const headers = parseCSVLine(lines[0])
   const data = []
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',')
+    const line = lines[i].trim()
+    // Skip empty lines
+    if (!line) continue
+
+    const values = parseCSVLine(line)
     const row: any = {}
 
     headers.forEach((header, index) => {
@@ -20,6 +26,29 @@ function parseCSV(csvText: string) {
   }
 
   return data
+}
+
+// Helper function to parse a single CSV line (handles quoted values)
+function parseCSVLine(line: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+
+    if (char === '"') {
+      inQuotes = !inQuotes
+    } else if (char === ',' && !inQuotes) {
+      result.push(current)
+      current = ''
+    } else {
+      current += char
+    }
+  }
+
+  result.push(current)
+  return result
 }
 
 // POST - Upload Inventory via CSV
