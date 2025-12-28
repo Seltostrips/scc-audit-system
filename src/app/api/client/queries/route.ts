@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ClientStaff, AuditEntry } from '@/lib/models'
-import { connectToMongoDB } from '@/lib/mongodb'
+import connectToMongoDB from '@/lib/mongodb'
 
 // GET - Fetch all queries (for admin dashboard)
 export async function GET(request: NextRequest) {
