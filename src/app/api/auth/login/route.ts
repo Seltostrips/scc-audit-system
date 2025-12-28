@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { role, staffId, pin, username, password } = body
 
-    console.log('Login request:', { role, staffId, username: '****' })
+    console.log('Login request:', { role, staffId: username: '****' })
 
     if (!role) {
       return NextResponse.json(
@@ -15,23 +15,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate credentials
-    if ((role === 'audit' || role === 'client') && (!staffId || !pin)) {
-      return NextResponse.json(
-        { success: false, error: 'Staff ID and PIN are required' },
-        { status: 400 }
-      )
-    }
-
-    if (role === 'admin' && (!username || !password)) {
-      return NextResponse.json(
-        { success: false, error: 'Username and password are required' },
-        { status: 400 }
-      )
-    }
-
     // Handle each role
     if (role === 'audit') {
+      if (!staffId || !pin) {
+        return NextResponse.json(
+          { success: false, error: 'Staff ID and PIN are required' },
+          { status: 400 }
+        )
+      }
+
       const auditStaff = await db.auditStaff.findUnique({
         where: { staffId: staffId.toUpperCase() }
       })
@@ -43,12 +35,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!auditStaff.isActive) {
-        return NextResponse.json(
-          { success: false, error: 'Account is inactive' },
-          { status: 401 }
-        )
-      }
+      // ✅ Removed: if (!auditStaff.isActive) check
 
       if (auditStaff.pin !== pin) {
         return NextResponse.json(
@@ -65,6 +52,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (role === 'client') {
+      if (!staffId || !pin) {
+        return NextResponse.json(
+          { success: false, error: 'Staff ID and PIN are required' },
+          { status: 400 }
+        )
+      }
+
       const clientStaff = await db.clientStaff.findUnique({
         where: { staffId: staffId.toUpperCase() }
       })
@@ -76,12 +70,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!clientStaff.isActive) {
-        return NextResponse.json(
-          { success: false, error: 'Account is inactive' },
-          { status: 401 }
-        )
-      }
+      // ✅ Removed: if (!clientStaff.isActive) check
 
       if (clientStaff.pin !== pin) {
         return NextResponse.json(
@@ -98,6 +87,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (role === 'admin') {
+      if (!username || !password) {
+        return NextResponse.json(
+          { success: false, error: 'Username and password are required' },
+          { status: 400 }
+        )
+      }
+
       const admin = await db.admin.findUnique({
         where: { username }
       })
@@ -109,12 +105,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!admin.isActive) {
-        return NextResponse.json(
-          { success: false, error: 'Account is inactive' },
-          { status: 401 }
-        )
-      }
+      // ✅ Removed: if (!admin.isActive) check
 
       if (admin.password !== password) {
         return NextResponse.json(
