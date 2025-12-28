@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ClientStaff } from '@/lib/models'
 import connectToMongoDB from '@/lib/mongodb'
-import bcrypt from 'bcryptjs'
+// 🔻 REMOVED: bcryptjs — not needed for plaintext PINs
 
 export async function POST(request: NextRequest) {
   await connectToMongoDB()
@@ -20,9 +20,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // Verify PIN
-    const isPasswordValid = await bcrypt.compare(pin, staff.pin)
-    if (!isPasswordValid) {
+    // ✅ PLAINTEXT PIN COMPARISON
+    if (staff.pin !== pin) {
       return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 })
     }
 
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
       id: staff.id,
       staffId: staff.staffId,
       name: staff.name,
-       location: staff.location
+      location: staff.location
     })
   } catch (error: any) {
     console.error('Client staff login error:', error)
