@@ -172,138 +172,132 @@ export default function AuditClerk2Page() {
     }
   }, [totalQuantity, maxQtyOdin])
 
-    const handleSubmit = async () => {
-    if (!inventoryData) {
-      toast.error('Please search for a SKU first')
-      console.error('❌ No inventory data')
+    const handleSubmit = async () => {  // ← Make sure this line has 'async'
+  if (!inventoryData) {
+    toast.error('Please search for a SKU first')
+    console.error('❌ No inventory data')
+    return
+  }
+
+  if (!selectedLocation) {
+    toast.error('Please select a location')
+    console.error('❌ No location selected')
+    return
+  }
+
+  if (needsObjection && !objectionData.assignedClientStaffId) {
+    toast.error('Please select a client staff to raise objection')
+    console.error('❌ No client staff selected for objection')
+    return
+  }
+
+  try {
+    console.log('📤 Getting audit staff ID for:', auditStaffId)
+    const staffResponse = await fetch('/api/audit/locations?staffId=' + auditStaffId)
+    if (!staffResponse.ok) {
+      console.error('❌ Failed to get audit staff ID:', staffResponse.status, staffResponse.statusText)
+      toast.error('Failed to get audit staff ID. Please try again.')
       return
     }
+    const staffData = await staffResponse.json()
+    console.log('✅ Got audit staff ID:', staffData.id)
 
-    if (!selectedLocation) {
-      toast.error('Please select a location')
-      console.error('❌ No location selected')
-      return
+    const entryStatus = needsObjection ? 'Submitted' : 'Completed'
+    console.log('📝 Entry status:', entryStatus)
+
+    const entryData = {
+      auditStaffId: staffData.id,
+      auditStaffName: auditStaffName,
+      location: selectedLocation,
+      skuId: inventoryData.skuId,
+      skuName: inventoryData.name,
+      pickingQty: parseFloat(formData.pickingQty) || 0,
+      pickingLocation: formData.pickingLocation || null,
+      bulkQty: parseFloat(formData.bulkQty) || 0,
+      bulkLocation: formData.bulkLocation || null,
+      nearExpiryQty: parseFloat(formData.nearExpiryQty) || 0,
+      nearExpiryLocation: formData.nearExpiryLocation || 'NA',
+      jitQty: parseFloat(formData.jitQty) || 0,
+      jitLocation: formData.jitLocation || 'NA',
+      damagedQty: parseFloat(formData.damagedQty) || 0,
+      damagedLocation: formData.damagedLocation || 'NA',
+      minQtyOdin: parseFloat(formData.minQtyOdin) || 0,
+      blockedQtyOdin: parseFloat(formData.blockedQtyOdin) || 0,
+      maxQtyOdin: parseFloat(formData.maxQtyOdin) || 0,
+      totalQuantityIdentified: totalQuantity,
+      qtyTested: parseFloat(formData.qtyTested) || 0,
+      status: entryStatus,
+      objectionRaised: false,
+      objectionType: null as string | null,
+      assignedClientStaffId: null as string | null,
+      assignedClientStaffName: null as string | null,
+      objectionRemarks: null as string | null
     }
 
-    if (needsObjection && !objectionData.assignedClientStaffId) {
-      toast.error('Please select a client staff to raise objection')
-      console.error('❌ No client staff selected for objection')
-      return
+    if (needsObjection) {
+      entryData.objectionRaised = true
+      entryData.objectionType = objectionType
+      entryData.assignedClientStaffId = objectionData.assignedClientStaffId
+      entryData.assignedClientStaffName = objectionData.assignedClientStaffName
+      entryData.objectionRemarks = objectionData.objectionRemarks
     }
 
-    try {
-      console.log('📤 Getting audit staff ID for:', auditStaffId)
-      const staffResponse = await fetch('/api/audit/locations?staffId=' + auditStaffId)
-      if (!staffResponse.ok) {
-        console.error('❌ Failed to get audit staff ID:', staffResponse.status, staffResponse.statusText)
-        toast.error('Failed to get audit staff ID. Please try again.')
-        return
-      }
-      const staffData = await staffResponse.json()
-      console.log('✅ Got audit staff ID:', staffData.id)
+    console.log('📤 Posting audit entry:', entryData)
 
-      const entryStatus = needsObjection ? 'Submitted' : 'Completed'
-      console.log('📝 Entry status:', entryStatus)
+    const response = await fetch('/api/audit/entries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entryData)
+    })
 
-      const entryData = {
-        auditStaffId: staffData.id, // ← Use MongoDB ObjectId, not string
-        auditStaffName: auditStaffName,
-        location: selectedLocation,
-        skuId: inventoryData.skuId,
-        skuName: inventoryData.name,
-        pickingQty: parseFloat(formData.pickingQty) || 0,
-        pickingLocation: formData.pickingLocation || null,
-        bulkQty: parseFloat(formData.bulkQty) || 0,
-        bulkLocation: formData.bulkLocation || null,
-        nearExpiryQty: parseFloat(formData.nearExpiryQty) || 0,
-        nearExpiryLocation: formData.nearExpiryLocation || 'NA',
-        jitQty: parseFloat(formData.jitQty) || 0,
-        jitLocation: formData.jitLocation || 'NA',
-        damagedQty: parseFloat(formData.damagedQty) || 0,
-        damagedLocation: formData.damagedLocation || 'NA',
-        minQtyOdin: parseFloat(formData.minQtyOdin) || 0,
-        blockedQtyOdin: parseFloat(formData.blockedQtyOdin) || 0,
-        maxQtyOdin: parseFloat(formData.maxQtyOdin) || 0,
-        totalQuantityIdentified: totalQuantity,
-        qtyTested: parseFloat(formData.qtyTested) || 0,
-        status: entryStatus,
-        objectionRaised: false,
-        objectionType: null as string | null,
-        assignedClientStaffId: null as string | null,
-        assignedClientStaffName: null as string | null,
-        objectionRemarks: null as string | null
-      }
+    console.log('📥 Response status:', response.status, response.statusText)
 
-      if (needsObjection) {
-        entryData.objectionRaised = true
-        entryData.objectionType = objectionType
-        entryData.assignedClientStaffId = objectionData.assignedClientStaffId
-        entryData.assignedClientStaffName = objectionData.assignedClientStaffName
-        entryData.objectionRemarks = objectionData.objectionRemarks
-      } else {
-        entryData.objectionRaised = false
-        entryData.objectionType = null
-        entryData.assignedClientStaffId = null
-        entryData.assignedClientStaffName = null
-        entryData.objectionRemarks = null
-      }
+    if (response.ok) {
+      console.log('✅ Entry submitted successfully')
+      const createdEntry = await response.json()
+      console.log('📊 Created entry:', createdEntry)
+      toast.success(needsObjection ? 'Audit entry with objection submitted successfully' : 'Audit entry (matching quantities) submitted successfully')
 
-      console.log('📤 Posting audit entry:', entryData)
-
-      const response = await fetch('/api/audit/entries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entryData)
+      setSkuId('')
+      setInventoryData(null)
+      setFormData({
+        pickingQty: '',
+        pickingLocation: '',
+        bulkQty: '',
+        bulkLocation: '',
+        nearExpiryQty: '',
+        nearExpiryLocation: 'NA',
+        jitQty: '',
+        jitLocation: 'NA',
+        damagedQty: '',
+        damagedLocation: 'NA',
+        minQtyOdin: '',
+        blockedQtyOdin: '',
+        maxQtyOdin: '',
+        qtyTested: ''
       })
+      setObjectionData({
+        assignedClientStaffId: '',
+        assignedClientStaffName: '',
+        objectionRemarks: ''
+      })
+      setShowObjection(false)
 
-      console.log('📥 Response status:', response.status, response.statusText)
-
-      if (response.ok) {
-        console.log('✅ Entry submitted successfully')
-        const createdEntry = await response.json()
-        console.log('📊 Created entry:', createdEntry)
-        toast.success(needsObjection ? 'Audit entry with objection submitted successfully' : 'Audit entry (matching quantities) submitted successfully')
-
-        setSkuId('')
-        setInventoryData(null)
-        setFormData({
-          pickingQty: '',
-          pickingLocation: '',
-          bulkQty: '',
-          bulkLocation: '',
-          nearExpiryQty: '',
-          nearExpiryLocation: 'NA',
-          jitQty: '',
-          jitLocation: 'NA',
-          damagedQty: '',
-          damagedLocation: 'NA',
-          minQtyOdin: '',
-          blockedQtyOdin: '',
-          maxQtyOdin: '',
-          qtyTested: ''
-        })
-        setObjectionData({
-          assignedClientStaffId: '',
-          assignedClientStaffName: '',
-          objectionRemarks: ''
-        })
-        setShowObjection(false)
-
-        loadMyEntries()
-      } else {
-        const errorText = await response.text()
-        console.error('❌ Submit failed:', response.status, errorText)
-        toast.error('Failed to submit audit entry: ' + errorText)
-      }
-    } catch (error) {
-      console.error('❌ Exception during submission:', error)
-      if (error instanceof Error) {
-        toast.error('Failed to submit audit entry: ' + error.message)
-      } else {
-        toast.error('Failed to submit audit entry: Unknown error occurred')
-      }
+      loadMyEntries()
+    } else {
+      const errorText = await response.text()
+      console.error('❌ Submit failed:', response.status, errorText)
+      toast.error('Failed to submit audit entry: ' + errorText)
+    }
+  } catch (error) {
+    console.error('❌ Exception during submission:', error)
+    if (error instanceof Error) {
+      toast.error('Failed to submit audit entry: ' + error.message)
+    } else {
+      toast.error('Failed to submit audit entry: Unknown error occurred')
     }
   }
+}
     const response = await fetch('/api/audit/entries', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
