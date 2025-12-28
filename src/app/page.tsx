@@ -33,22 +33,21 @@ export default function LoginPage() {
 
       if (role === 'audit') {
         endpoint = '/api/auth/audit-clerk'
+        // ✅ Send FLAT payload — no nesting!
         body = {
-          auditCredentials: {
-            staffId: credentials.auditStaffId,
-            pin: credentials.pin
-          }
+          staffId: credentials.auditStaffId,
+          pin: credentials.pin
         }
       } else if (role === 'client') {
         endpoint = '/api/auth/client-staff'
+        // ✅ Send FLAT payload
         body = {
-          clientCredentials: {
-            staffId: credentials.clientStaffId,
-            pin: credentials.clientPin
-          }
+          staffId: credentials.clientStaffId,
+          pin: credentials.clientPin
         }
       } else if (role === 'admin') {
         endpoint = '/api/auth/admin'
+        // Admin already flat — OK
         body = {
           username: credentials.adminUsername,
           password: credentials.adminPassword,
