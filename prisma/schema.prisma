@@ -9,7 +9,7 @@ datasource db {
   provider = "mongodb"
   // IMPORTANT: Put your MongoDB Connection String here or in .env
   // Example: url = env("DATABASE_URL")
-  url      = env("mongodb+srv://scc-admin:1dA2WhykZD0B6cWS@cluster0.tfrunk2.mongodb.net/?appName=Cluster0&retryWrites=true&w=majorityApp")
+  url      = "mongodb+srv://scc-admin:1dA2WhykZD0B6cWS@cluster0.tfrunk2.mongodb.net/?appName=Cluster0&retryWrites=true&w=majorityApp"
 }
 
 // COLLECTION 1: Staff Members
