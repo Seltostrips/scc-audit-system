@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AuditEntry, AuditStaff, Inventory } from '@/lib/models'
-import { connectToMongoDB } from '@/lib/mongodb'
+import connectToMongoDB from '@/lib/mongodb'
 
 // GET - Fetch entries by audit staff ID
 export async function GET(request: NextRequest) {
