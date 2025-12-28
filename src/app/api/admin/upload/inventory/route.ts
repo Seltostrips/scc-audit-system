@@ -36,7 +36,6 @@ function parseCSVLine(line: string): string[] {
 
   for (let i = 0; i < line.length; i++) {
     const char = line[i]
-
     if (char === '"') {
       inQuotes = !inQuotes
     } else if (char === ',' && !inQuotes) {
@@ -50,7 +49,6 @@ function parseCSVLine(line: string): string[] {
   result.push(current)
   return result
 }
-
 // POST - Upload Inventory via CSV
 export async function POST(request: NextRequest) {
   await connectToMongoDB()
