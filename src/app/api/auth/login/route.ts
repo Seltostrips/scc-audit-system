@@ -6,8 +6,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { role, staffId, pin, username, password } = body
 
-    console.log('Login request:', { role, staffId: username: '****' })
-
     if (!role) {
       return NextResponse.json(
         { success: false, error: 'Role is required' },
@@ -15,7 +13,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Handle each role
     if (role === 'audit') {
       if (!staffId || !pin) {
         return NextResponse.json(
@@ -34,8 +31,6 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         )
       }
-
-      // ✅ Removed: if (!auditStaff.isActive) check
 
       if (auditStaff.pin !== pin) {
         return NextResponse.json(
@@ -70,8 +65,6 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // ✅ Removed: if (!clientStaff.isActive) check
-
       if (clientStaff.pin !== pin) {
         return NextResponse.json(
           { success: false, error: 'Invalid credentials' },
@@ -104,8 +97,6 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         )
       }
-
-      // ✅ Removed: if (!admin.isActive) check
 
       if (admin.password !== password) {
         return NextResponse.json(
