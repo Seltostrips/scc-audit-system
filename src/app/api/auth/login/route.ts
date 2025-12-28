@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 
-// ✅ Use Prisma Client directly to avoid import type issues
 const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
@@ -16,7 +15,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Handle each role
     if (role === 'audit') {
       if (!staffId || !pin) {
         return NextResponse.json(
@@ -25,10 +23,9 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // ✅ Use any to bypass Prisma type checking issues
       const auditStaff = await prisma.auditStaff.findUnique({
         where: { staffId: staffId.toUpperCase() }
-      }) as any
+      })
 
       if (!auditStaff) {
         return NextResponse.json(
@@ -59,10 +56,9 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // ✅ Use any to bypass Prisma type checking issues
       const clientStaff = await prisma.clientStaff.findUnique({
         where: { staffId: staffId.toUpperCase() }
-      }) as any
+      })
 
       if (!clientStaff) {
         return NextResponse.json(
@@ -93,10 +89,9 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // ✅ Use any to bypass Prisma type checking issues
       const admin = await prisma.admin.findUnique({
         where: { username }
-      }) as any
+      })
 
       if (!admin) {
         return NextResponse.json(
