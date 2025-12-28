@@ -14,10 +14,8 @@ export default function LoginPage() {
 
   const [role, setRole] = useState<'audit' | 'client' | 'admin'>('audit')
   const [credentials, setCredentials] = useState({
-    auditStaffId: '',
+    staffId: '',
     pin: '',
-    clientStaffId: '',
-    clientPin: '',
     adminUsername: '',
     adminPassword: ''
   })
@@ -28,51 +26,49 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      let endpoint = ''
-      let body = {}
+      // Map frontend role to backend role slug
+      const roleSlugs = {
+        audit: 'audit-clerk',
+        client: 'client-staff',
+        admin: 'admin'
+      }
 
-      if (role === 'audit') {
-        endpoint = '/api/auth/audit-clerk'
-        body = {
-          staffId: credentials.auditStaffId,
+      let payload = {}
+      if (role === 'audit' || role === 'client') {
+        payload = {
+          role: roleSlugs[role],
+          staffId: credentials.staffId,
           pin: credentials.pin
         }
-      } else if (role === 'client') {
-        endpoint = '/api/auth/client-staff'
-        body = {
-          staffId: credentials.clientStaffId,
-          pin: credentials.clientPin
-        }
       } else if (role === 'admin') {
-        endpoint = '/api/auth/admin'
-        body = {
+        payload = {
+          role: 'admin',
           username: credentials.adminUsername,
-          password: credentials.adminPassword,
-          action: 'login'
+          password: credentials.adminPassword
         }
       }
 
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload)
       })
 
       const data = await response.json()
 
       if (response.ok && data.success) {
         if (role === 'audit') {
-          sessionStorage.setItem('auditStaffId', credentials.auditStaffId)
+          sessionStorage.setItem('auditStaffId', credentials.staffId)
           sessionStorage.setItem('auditStaffName', data.name)
         } else if (role === 'client') {
-          sessionStorage.setItem('clientStaffId', credentials.clientStaffId)
+          sessionStorage.setItem('clientStaffId', credentials.staffId)
           sessionStorage.setItem('clientStaffName', data.name)
           sessionStorage.setItem('clientLocation', data.location || 'Noida WH')
         } else if (role === 'admin') {
           sessionStorage.setItem('isAdmin', 'true')
         }
 
-        toast.success(`Login successful as ${role.charAt(0).toUpperCase() + role.slice(1)}`)
+        toast.success(`Login successful as ${roleSlugs[role].replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`)
 
         if (role === 'audit') {
           router.push('/audit_clerk_2')
@@ -184,15 +180,15 @@ export default function LoginPage() {
             </div>
 
             {/* Role-Specific Credentials */}
-            {role === 'audit' && (
+            {(role === 'audit' || role === 'client') && (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="space-y-2">
-                  <Label htmlFor="auditStaffId">SCC ID</Label>
+                  <Label htmlFor="staffId">SCC ID</Label>
                   <Input
-                    id="auditStaffId"
+                    id="staffId"
                     placeholder="e.g., 26C"
-                    value={credentials.auditStaffId}
-                    onChange={(e) => setCredentials({ ...credentials, auditStaffId: e.target.value.toUpperCase() })}
+                    value={credentials.staffId}
+                    onChange={(e) => setCredentials({ ...credentials, staffId: e.target.value.toUpperCase() })}
                     className="uppercase font-mono"
                   />
                 </div>
@@ -204,33 +200,6 @@ export default function LoginPage() {
                     placeholder="Enter 4-digit PIN"
                     value={credentials.pin}
                     onChange={(e) => setCredentials({ ...credentials, pin: e.target.value })}
-                    maxLength={4}
-                    className="tracking-widest text-center font-mono"
-                  />
-                </div>
-              </div>
-            )}
-
-            {role === 'client' && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="space-y-2">
-                  <Label htmlFor="clientStaffId">SCC ID</Label>
-                  <Input
-                    id="clientStaffId"
-                    placeholder="e.g., 27A"
-                    value={credentials.clientStaffId}
-                    onChange={(e) => setCredentials({ ...credentials, clientStaffId: e.target.value.toUpperCase() })}
-                    className="uppercase font-mono"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientPin">PIN</Label>
-                  <Input
-                    id="clientPin"
-                    type="password"
-                    placeholder="Enter 4-digit PIN"
-                    value={credentials.clientPin}
-                    onChange={(e) => setCredentials({ ...credentials, clientPin: e.target.value })}
                     maxLength={4}
                     className="tracking-widest text-center font-mono"
                   />
