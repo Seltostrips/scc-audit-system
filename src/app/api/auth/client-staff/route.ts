@@ -1,43 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ClientStaff } from '@/lib/models'
-import connectToMongoDB from '@/lib/mongodb'
-// 🔻 REMOVED: bcryptjs — not needed for plaintext PINs
+import { db } from '@/lib/db'
+import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
-  await connectToMongoDB()
-
   try {
-    const body = await request.json()
-    const { staffId, pin } = body
+    const { staffId, pin } = await request.json()
 
     if (!staffId || !pin) {
-      return NextResponse.json({ error: 'Missing credentials' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Staff ID and PIN are required' },
+        { status: 400 }
+      )
     }
 
-    // Find client staff
-    const staff = await ClientStaff.findOne({ staffId })
-    if (!staff) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    const clientStaff = await db.clientStaff.findUnique({
+      where: { staffId: staffId.toUpperCase() }
+    })
+
+    if (!clientStaff) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid credentials' },
+        { status: 401 }
+      )
     }
 
-    // ✅ PLAINTEXT PIN COMPARISON
-    if (staff.pin !== pin) {
-      return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 })
+    if (!clientStaff.isActive) {
+      return NextResponse.json(
+        { success: false, error: 'Account is inactive' },
+        { status: 401 }
+      )
     }
 
-    if (!staff.isActive) {
-      return NextResponse.json({ error: 'Account is inactive' }, { status: 403 })
+    const isValidPin = await bcrypt.compare(pin, clientStaff.pin)
+
+    if (!isValidPin) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid credentials' },
+        { status: 401 }
+      )
     }
 
     return NextResponse.json({
       success: true,
-      id: staff.id,
-      staffId: staff.staffId,
-      name: staff.name,
-      location: staff.location
+      name: clientStaff.name,
+      location: clientStaff.location
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Client staff login error:', error)
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: 'Login failed' },
+      { status: 500 }
+    )
   }
 }

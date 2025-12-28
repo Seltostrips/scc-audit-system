@@ -1,44 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AuditStaff } from '@/lib/models'
-import connectToMongoDB from '@/lib/mongodb'
-// 🔻 REMOVED: bcrypt is not needed for plaintext PINs
+import { db } from '@/lib/db'
+import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
-  // Connect to MongoDB
-  await connectToMongoDB()
-
   try {
-    const body = await request.json()
-    const { staffId, pin } = body
+    const { staffId, pin } = await request.json()
 
     if (!staffId || !pin) {
-      return NextResponse.json({ error: 'Missing credentials' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Staff ID and PIN are required' },
+        { status: 400 }
+      )
     }
 
-    // Find audit staff
-    const staff = await AuditStaff.findOne({ staffId })
-    if (!staff) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    const auditStaff = await db.auditStaff.findUnique({
+      where: { staffId: staffId.toUpperCase() }
+    })
+
+    if (!auditStaff) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid credentials' },
+        { status: 401 }
+      )
     }
 
-    // ✅ PLAINTEXT PIN COMPARISON (since PIN is stored as "5013", not hashed)
-    if (staff.pin !== pin) {
-      return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 })
+    if (!auditStaff.isActive) {
+      return NextResponse.json(
+        { success: false, error: 'Account is inactive' },
+        { status: 401 }
+      )
     }
 
-    // Check if staff is active
-    if (!staff.isActive) {
-      return NextResponse.json({ error: 'Account is inactive' }, { status: 403 })
+    const isValidPin = await bcrypt.compare(pin, auditStaff.pin)
+
+    if (!isValidPin) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid credentials' },
+        { status: 401 }
+      )
     }
 
     return NextResponse.json({
       success: true,
-      id: staff.id,
-      staffId: staff.staffId,
-      name: staff.name
+      name: auditStaff.name,
+      id: auditStaff.id
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Audit clerk login error:', error)
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: 'Login failed' },
+      { status: 500 }
+    )
   }
 }
