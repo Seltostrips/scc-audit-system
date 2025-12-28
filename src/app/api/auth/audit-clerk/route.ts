@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,9 +30,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const isValidPin = await bcrypt.compare(pin, auditStaff.pin)
-
-    if (!isValidPin) {
+    // ✅ Direct PIN comparison (no bcrypt)
+    if (auditStaff.pin !== pin) {
       return NextResponse.json(
         { success: false, error: 'Invalid credentials' },
         { status: 401 }
