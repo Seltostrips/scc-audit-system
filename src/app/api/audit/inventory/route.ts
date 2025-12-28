@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Inventory } from '@/lib/models'
-import { connectToMongoDB } from '@/lib/mongodb'
+import connectToMongoDB from '@/lib/mongodb'
 
 // GET - Search SKU
 export async function GET(request: NextRequest) {
