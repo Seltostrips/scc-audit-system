@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Search, AlertTriangle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Search, AlertTriangle, CheckCircle, Package, RefreshCw, PlusCircle, FileCheck, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AuditClerk2Page() {
@@ -62,7 +62,7 @@ export default function AuditClerk2Page() {
       if (typeof window !== 'undefined') {
         const staffId = sessionStorage.getItem('auditStaffId')
         const staffName = sessionStorage.getItem('auditStaffName')
-        
+
         if (staffId && staffName) {
           setAuditStaffId(staffId)
           setAuditStaffName(staffName)
@@ -76,7 +76,7 @@ export default function AuditClerk2Page() {
     }
 
     checkAuth()
-  }, [])
+  }, [router])
 
   // Only check authentication AFTER session is loaded
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function AuditClerk2Page() {
       loadMyEntries()
     }
   }, [isAuthenticated])
- 
+
 
   const handleSearchSKU = async () => {
     if (!skuId) {
@@ -173,45 +173,30 @@ export default function AuditClerk2Page() {
   }, [totalQuantity, maxQtyOdin])
 
   const handleSubmit = async () => {
-    console.log('=== Submit Audit Entry ===')
-    console.log('inventoryData:', inventoryData)
-    console.log('selectedLocation:', selectedLocation)
-    console.log('formData:', formData)
-    console.log('needsObjection:', needsObjection)
-    console.log('objectionData:', objectionData)
-    console.log('auditStaffId:', auditStaffId)
-
     if (!inventoryData) {
       toast.error('Please search for a SKU first')
-      console.error('❌ No inventory data')
       return
     }
 
     if (!selectedLocation) {
       toast.error('Please select a location')
-      console.error('❌ No location selected')
       return
     }
 
     if (needsObjection && !objectionData.assignedClientStaffId) {
       toast.error('Please select a client staff to raise objection')
-      console.error('❌ No client staff selected for objection')
       return
     }
 
     try {
-      console.log('📤 Getting audit staff ID for:', auditStaffId)
       const staffResponse = await fetch('/api/audit/locations?staffId=' + auditStaffId)
       if (!staffResponse.ok) {
-        console.error('❌ Failed to get audit staff ID:', staffResponse.status, staffResponse.statusText)
         toast.error('Failed to get audit staff ID. Please try again.')
         return
       }
       const staffData = await staffResponse.json()
-      console.log('✅ Got audit staff ID:', staffData.id)
 
       const entryStatus = needsObjection ? 'Submitted' : 'Completed'
-      console.log('📝 Entry status:', entryStatus)
 
       const entryData = {
         auditStaffId: staffData.id,
@@ -256,20 +241,13 @@ export default function AuditClerk2Page() {
         entryData.objectionRemarks = null
       }
 
-      console.log('📤 Posting audit entry:', entryData)
-
       const response = await fetch('/api/audit/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entryData)
       })
 
-      console.log('📥 Response status:', response.status, response.statusText)
-
       if (response.ok) {
-        console.log('✅ Entry submitted successfully')
-        const createdEntry = await response.json()
-        console.log('📊 Created entry:', createdEntry)
         toast.success(needsObjection ? 'Audit entry with objection submitted successfully' : 'Audit entry (matching quantities) submitted successfully')
 
         setSkuId('')
@@ -300,16 +278,11 @@ export default function AuditClerk2Page() {
         loadMyEntries()
       } else {
         const errorText = await response.text()
-        console.error('❌ Submit failed:', response.status, errorText)
         toast.error('Failed to submit audit entry: ' + errorText)
       }
     } catch (error) {
-      console.error('❌ Exception during submission:', error)
-      if (error instanceof Error) {
-        toast.error('Failed to submit audit entry: ' + error.message)
-      } else {
-        toast.error('Failed to submit audit entry: Unknown error occurred')
-      }
+      console.error('Exception during submission:', error)
+      toast.error('Failed to submit audit entry')
     }
   }
 
@@ -345,39 +318,27 @@ export default function AuditClerk2Page() {
   }
 
   const loadMyEntries = async () => {
-    console.log('=== Load My Entries ===')
-    console.log('auditStaffId:', auditStaffId)
-    
     try {
       const response = await fetch('/api/audit/entries?auditStaffId=' + auditStaffId)
-      console.log('📤 Response status:', response.status, response.statusText)
-      
+
       if (!response.ok) {
-        console.error('❌ Failed to fetch entries:', response.status)
         toast.error('Failed to load entries. Please refresh page.')
         setMyEntries([])
         setCompletedEntries([])
         setRaisedObjections([])
         return
       }
-      
-      const data = await response.json()
-      console.log('📊 Entries data:', data)
-      console.log('Is array?', Array.isArray(data))
-      console.log('Data length:', data?.length)
 
+      const data = await response.json()
       const allEntries = Array.isArray(data) ? data : []
       const completed = allEntries.filter((e: any) => e.status === 'Completed')
       const withObjection = allEntries.filter((e: any) => ['Submitted', 'Rejected', 'Resubmitted'].includes(e.status))
-
-      console.log('✅ Completed entries:', completed.length)
-      console.log('✅ Entries with objection:', withObjection.length)
 
       setMyEntries(withObjection)
       setCompletedEntries(completed)
       setRaisedObjections(withObjection)
     } catch (error) {
-      console.error('❌ Error loading entries:', error)
+      console.error('Error loading entries:', error)
       toast.error('Failed to load entries')
       setMyEntries([])
       setCompletedEntries([])
@@ -386,16 +347,17 @@ export default function AuditClerk2Page() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      'Draft': 'bg-gray-500',
-      'Submitted': 'bg-blue-500',
-      'Approved': 'bg-green-500',
-      'Rejected': 'bg-red-500',
-      'Resubmitted': 'bg-yellow-500',
-      'Completed': 'bg-gray-400',
-      'Closed': 'bg-purple-500'
+    const statusConfig: Record<string, { color: string; label: string }> = {
+      'Draft': { color: 'bg-slate-500', label: 'Draft' },
+      'Submitted': { color: 'bg-blue-500', label: 'Pending' },
+      'Approved': { color: 'bg-emerald-500', label: 'Approved' },
+      'Rejected': { color: 'bg-red-500', label: 'Rejected' },
+      'Resubmitted': { color: 'bg-amber-500', label: 'Resubmitted' },
+      'Completed': { color: 'bg-slate-400', label: 'Completed' },
+      'Closed': { color: 'bg-purple-500', label: 'Closed' }
     }
-    return <Badge className={statusColors[status] || 'bg-gray-500'}>{status}</Badge>
+    const config = statusConfig[status] || statusConfig['Draft']
+    return <Badge className={config.color}>{config.label}</Badge>
   }
 
   const getObjectionTypeBadge = (type: string) => {
@@ -404,13 +366,13 @@ export default function AuditClerk2Page() {
     return <Badge className={color}>{type}</Badge>
   }
 
-  // ✅ Loading and authentication checks MUST be BEFORE the main return
+  // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading...</p>
         </div>
       </div>
     )
@@ -420,389 +382,386 @@ export default function AuditClerk2Page() {
     return null
   }
 
-  // ✅ This is the main return statement with ONLY JSX
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-      <div className="border-b bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col">
+      {/* Header */}
+      <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => router.push('/')} size="sm">
+              <Button variant="ghost" onClick={() => router.push('/')} size="sm" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
+                Back
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Audit Clerk Dashboard</h1>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Clerk Dashboard</h1>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   {auditStaffName} ({auditStaffId})
                 </p>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Select Location</Label>
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Noida WH">Noida WH</SelectItem>
-                  <SelectItem value="Mumbai WH">Mumbai WH</SelectItem>
-                  <SelectItem value="Hyderabad WH">Hyderabad WH</SelectItem>
-                  <SelectItem value="Bengaluru WH">Bengaluru WH</SelectItem>
-                  <SelectItem value="Gurugram WH">Gurugram WH</SelectItem>
-                  <SelectItem value="Delhi Retail">Delhi Retail</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="location-select" className="text-sm">Location</Label>
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger id="location-select" className="w-48">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Noida WH">Noida WH</SelectItem>
+                    <SelectItem value="Mumbai WH">Mumbai WH</SelectItem>
+                    <SelectItem value="Hyderabad WH">Hyderabad WH</SelectItem>
+                    <SelectItem value="Bengaluru WH">Bengaluru WH</SelectItem>
+                    <SelectItem value="Gurugram WH">Gurugram WH</SelectItem>
+                    <SelectItem value="Delhi Retail">Delhi Retail</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="container mx-auto px-4 py-6 flex-1">
-        <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Search SKU</CardTitle>
-              <CardDescription>Enter SKU ID to start audit</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-2">
-                  <Label>SKU ID</Label>
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Left Column - Audit Form */}
+          <div className="space-y-6">
+            {/* SKU Search Card */}
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  Search SKU
+                </CardTitle>
+                <CardDescription>Enter SKU ID to start audit</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
                   <Input
-                    placeholder="e.g., 657611"
+                    placeholder="Enter SKU ID (e.g., 657611)"
                     value={skuId}
                     onChange={(e) => setSkuId(e.target.value.toUpperCase())}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearchSKU()}
+                    className="flex-1 font-mono uppercase"
                   />
-                </div>
-                <div className="flex items-end">
-                  <Button onClick={handleSearchSKU}>
-                    <Search className="h-4 w-4 mr-2" />
+                  <Button onClick={handleSearchSKU} disabled={!skuId} className="gap-2">
+                    <Search className="h-4 w-4" />
                     Search
                   </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {inventoryData && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Audit Form: {inventoryData.name}</CardTitle>
-                <CardDescription>SKU ID: {inventoryData.skuId}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold">Quantity Entry (Yellow Cells)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <Label>Picking Quantity</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.pickingQty}
-                        onChange={(e) => setFormData({ ...formData, pickingQty: e.target.value })}
-                        placeholder="Enter quantity"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Picking Location</Label>
-                      <Input
-                        value={formData.pickingLocation}
-                        onChange={(e) => setFormData({ ...formData, pickingLocation: e.target.value })}
-                        placeholder={inventoryData.pickingLocation || 'Enter location'}
-                      />
-                    </div>
-                    <div className="space-y-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <Label>Bulk Quantity</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.bulkQty}
-                        onChange={(e) => setFormData({ ...formData, bulkQty: e.target.value })}
-                        placeholder="Enter quantity"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Bulk Location</Label>
-                      <Input
-                        value={formData.bulkLocation}
-                        onChange={(e) => setFormData({ ...formData, bulkLocation: e.target.value })}
-                        placeholder={inventoryData.bulkLocation || 'Enter location'}
-                      />
-                    </div>
-                    <div className="space-y-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <Label>Near Expiry Quantity</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.nearExpiryQty}
-                        onChange={(e) => setFormData({ ...formData, nearExpiryQty: e.target.value })}
-                        placeholder="Enter quantity"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Near Expiry Location</Label>
-                      <Input
-                        value={formData.nearExpiryLocation}
-                        onChange={(e) => setFormData({ ...formData, nearExpiryLocation: e.target.value })}
-                        placeholder="Enter location"
-                      />
-                    </div>
-                    <div className="space-y-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <Label>JIT Quantity</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.jitQty}
-                        onChange={(e) => setFormData({ ...formData, jitQty: e.target.value })}
-                        placeholder="Enter quantity"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>JIT Location</Label>
-                      <Input
-                        value={formData.jitLocation}
-                        onChange={(e) => setFormData({ ...formData, jitLocation: e.target.value })}
-                        placeholder="Enter location"
-                      />
-                    </div>
-                    <div className="space-y-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <Label>Damaged Quantity</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.damagedQty}
-                        onChange={(e) => setFormData({ ...formData, damagedQty: e.target.value })}
-                        placeholder="Enter quantity"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Damaged Location</Label>
-                      <Input
-                        value={formData.damagedLocation}
-                        onChange={(e) => setFormData({ ...formData, damagedLocation: e.target.value })}
-                        placeholder="Enter location"
-                      />
-                    </div>
-                  </div>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-lg font-semibold">Total Quantity Identified</Label>
-                      <span className="text-2xl font-bold">{totalQuantity.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">ODIN Quantity Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label>Minimum Quantity (ODIN)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={formData.minQtyOdin}
-                          onChange={(e) => setFormData({ ...formData, minQtyOdin: e.target.value })}
-                          placeholder="Enter minimum quantity"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Blocked Quantity (ODIN)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={formData.blockedQtyOdin}
-                          onChange={(e) => setFormData({ ...formData, blockedQtyOdin: e.target.value })}
-                          placeholder="Enter blocked quantity"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Maximum Quantity (ODIN)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={formData.maxQtyOdin}
-                          onChange={(e) => setFormData({ ...formData, maxQtyOdin: e.target.value })}
-                          placeholder="Enter maximum quantity"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  {showObjection && needsObjection && (
-                    <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-orange-900 dark:text-orange-100">
-                          <AlertTriangle className="h-5 w-5" />
-                          Audit Query Generated: {objectionType}
-                        </CardTitle>
-                        <CardDescription className="text-orange-800 dark:text-orange-200">
-                          Total Quantity ({totalQuantity.toFixed(2)}) differs from Maximum Quantity as per ODIN ({maxQtyOdin.toFixed(2)})
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Qty Tested</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={formData.qtyTested}
-                              onChange={(e) => setFormData({ ...formData, qtyTested: e.target.value })}
-                              placeholder="Enter tested quantity"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Assign to Client Staff</Label>
-                            <Select
-                              value={objectionData.assignedClientStaffId}
-                              onValueChange={handleObjectionStaffChange}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select client staff" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {clientStaffOptions.map((staff: any) => (
-                                  <SelectItem key={staff.id} value={staff.id}>
-                                    {staff.name} ({staff.staffId})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Objection Remarks</Label>
-                          <Textarea
-                            value={objectionData.objectionRemarks}
-                            onChange={(e) => setObjectionData({ ...objectionData, objectionRemarks: e.target.value })}
-                            placeholder="Enter objection details..."
-                            rows={3}
-                            required
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  <div className="flex gap-4">
-                    {!needsObjection && (
-                      <Button onClick={handleSubmit} className="flex-1" size="lg">
-                        <CheckCircle className="h-5 w-5 mr-2" />
-                        Submit Audit Entry (Matching)
-                      </Button>
-                    )}
-                    {needsObjection && (
-                      <Button onClick={handleSubmit} className="flex-1" size="lg" variant="default">
-                        <AlertTriangle className="h-5 w-5 mr-2" />
-                        Submit with Objection
-                      </Button>
-                    )}
-                    <Button onClick={handleClear} variant="outline">
-                      Clear
-                    </Button>
-                  </div>
+                  <Button onClick={handleClear} variant="outline">
+                    Clear
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Entries ({completedEntries.length})</CardTitle>
-              <CardDescription>Audit entries where quantities matched (no objection)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="max-h-96 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>SKU ID</TableHead>
-                      <TableHead>Total Qty</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {completedEntries.length > 0 && completedEntries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell>{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>{entry.location}</TableCell>
-                        <TableCell>{entry.skuId}</TableCell>
-                        <TableCell className="max-w-xs truncate">{entry.skuName}</TableCell>
-                        <TableCell>{entry.totalQuantityIdentified}</TableCell>
-                        <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {completedEntries.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No completed entries yet. Start by searching for a SKU above.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Inventory Details Card */}
+            {inventoryData && (
+              <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Inventory Details
+                  </CardTitle>
+                  <CardDescription>
+                    {inventoryData.skuId} - {inventoryData.name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Quantity Inputs */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="picking-qty">Picking Quantity</Label>
+                      <Input
+                        id="picking-qty"
+                        type="number"
+                        placeholder="0"
+                        value={formData.pickingQty}
+                        onChange={(e) => setFormData({ ...formData, pickingQty: e.target.value })}
+                        className="text-right font-mono"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="bulk-qty">Bulk Quantity</Label>
+                      <Input
+                        id="bulk-qty"
+                        type="number"
+                        placeholder="0"
+                        value={formData.bulkQty}
+                        onChange={(e) => setFormData({ ...formData, bulkQty: e.target.value })}
+                        className="text-right font-mono"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="near-expiry-qty">Near Expiry Qty</Label>
+                      <Input
+                        id="near-expiry-qty"
+                        type="number"
+                        placeholder="0"
+                        value={formData.nearExpiryQty}
+                        onChange={(e) => setFormData({ ...formData, nearExpiryQty: e.target.value })}
+                        className="text-right font-mono"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="jit-qty">JIT Quantity</Label>
+                      <Input
+                        id="jit-qty"
+                        type="number"
+                        placeholder="0"
+                        value={formData.jitQty}
+                        onChange={(e) => setFormData({ ...formData, jitQty: e.target.value })}
+                        className="text-right font-mono"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="damaged-qty">Damaged Quantity</Label>
+                      <Input
+                        id="damaged-qty"
+                        type="number"
+                        placeholder="0"
+                        value={formData.damagedQty}
+                        onChange={(e) => setFormData({ ...formData, damagedQty: e.target.value })}
+                        className="text-right font-mono"
+                      />
+                    </div>
+                  </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Raised Objections ({raisedObjections.length})</CardTitle>
-              <CardDescription>Audit entries with objections that are pending review</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="max-h-96 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>SKU ID</TableHead>
-                      <TableHead>SKU Name</TableHead>
-                      <TableHead>Total Qty</TableHead>
-                      <TableHead>Max ODIN</TableHead>
-                      <TableHead>Obj Type</TableHead>
-                      <TableHead>Assigned To</TableHead>
-                      <TableHead>Remarks</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {raisedObjections.length > 0 && raisedObjections.map((query) => (
-                      <TableRow key={query.id}>
-                        <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>{query.location}</TableCell>
-                        <TableCell>{query.auditStaffName}</TableCell>
-                        <TableCell>{query.skuId}</TableCell>
-                        <TableCell className="max-w-xs truncate">{query.skuName}</TableCell>
-                        <TableCell>{query.totalQuantityIdentified}</TableCell>
-                        <TableCell>{query.maxQtyOdin}</TableCell>
-                        <TableCell>{getObjectionTypeBadge(query.objectionType)}</TableCell>
-                        <TableCell>{query.assignedClientStaffName || '-'}</TableCell>
-                        <TableCell className="max-w-xs truncate">{query.objectionRemarks || '-'}</TableCell>
-                        <TableCell>{getStatusBadge(query.status)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {raisedObjections.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                          No raised objections yet.
-                        </TableCell>
-                      </TableRow>
+                  {/* ODIN Data */}
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="font-semibold text-sm mb-3 text-slate-700 dark:text-slate-300">ODIN Data</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="min-odin" className="text-xs">Min Qty</Label>
+                        <Input
+                          id="min-odin"
+                          type="number"
+                          placeholder="0"
+                          value={formData.minQtyOdin}
+                          onChange={(e) => setFormData({ ...formData, minQtyOdin: e.target.value })}
+                          className="text-right font-mono text-sm h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="blocked-odin" className="text-xs">Blocked Qty</Label>
+                        <Input
+                          id="blocked-odin"
+                          type="number"
+                          placeholder="0"
+                          value={formData.blockedQtyOdin}
+                          onChange={(e) => setFormData({ ...formData, blockedQtyOdin: e.target.value })}
+                          className="text-right font-mono text-sm h-9"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="max-odin" className="text-xs">Max Qty</Label>
+                        <Input
+                          id="max-odin"
+                          type="number"
+                          placeholder="0"
+                          value={formData.maxQtyOdin}
+                          onChange={(e) => setFormData({ ...formData, maxQtyOdin: e.target.value })}
+                          className="text-right font-mono text-sm h-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quantity Summary */}
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Total Identified</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{totalQuantity}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Max ODIN</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{maxQtyOdin}</p>
+                      </div>
+                    </div>
+                    {maxQtyOdin > 0 && Math.abs(totalQuantity - maxQtyOdin) > 0.01 && (
+                      <div className={`mt-3 p-2 rounded-lg ${totalQuantity < maxQtyOdin ? 'bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400' : 'bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400'}`}>
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            {objectionType}: {Math.abs(totalQuantity - maxQtyOdin).toFixed(2)} {objectionType === 'Short' ? 'short' : 'excess'}
+                          </span>
+                        </div>
+                      </div>
                     )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                  </div>
+
+                  {/* Quantity Tested */}
+                  <div className="space-y-2">
+                    <Label htmlFor="qty-tested">Quantity Tested</Label>
+                    <Input
+                      id="qty-tested"
+                      type="number"
+                      placeholder="0"
+                      value={formData.qtyTested}
+                      onChange={(e) => setFormData({ ...formData, qtyTested: e.target.value })}
+                      className="text-right font-mono"
+                    />
+                  </div>
+
+                  {/* Objection Form */}
+                  {showObjection && needsObjection && (
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border-2 border-amber-200 dark:border-amber-800">
+                      <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-4 flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5" />
+                        Objection Required
+                      </h4>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="client-staff">Assign to Client Staff *</Label>
+                          <Select value={objectionData.assignedClientStaffId} onValueChange={handleObjectionStaffChange}>
+                            <SelectTrigger id="client-staff" className="w-full">
+                              <SelectValue placeholder="Select client staff" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {clientStaffOptions.map((staff) => (
+                                <SelectItem key={staff.id} value={staff.id}>
+                                  {staff.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="objection-remarks">Objection Remarks</Label>
+                          <Textarea
+                            id="objection-remarks"
+                            placeholder="Describe the discrepancy..."
+                            value={objectionData.objectionRemarks}
+                            onChange={(e) => setObjectionData({ ...objectionData, objectionRemarks: e.target.value })}
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!inventoryData || !selectedLocation || (needsObjection && !objectionData.assignedClientStaffId)}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                    {needsObjection ? 'Submit with Objection' : 'Submit Audit Entry'}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - History */}
+          <div className="space-y-6">
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-emerald-50 dark:bg-emerald-950/20 border-2 border-emerald-200 dark:border-emerald-800">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    <CardDescription className="text-xs font-medium">Completed</CardDescription>
+                  </div>
+                  <CardTitle className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{completedEntries.length}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-800">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    <CardDescription className="text-xs font-medium">Pending</CardDescription>
+                  </div>
+                  <CardTitle className="text-2xl font-bold text-amber-900 dark:text-amber-100">{raisedObjections.length}</CardTitle>
+                </CardHeader>
+              </Card>
+            </div>
+
+            {/* My Entries Table */}
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">My Audit Entries</CardTitle>
+                <CardDescription>Recent audit entries with objections</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden max-h-96 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 dark:bg-slate-800">
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Location</TableHead>
+                        <TableHead className="font-semibold">SKU</TableHead>
+                        <TableHead className="font-semibold">Type</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {myEntries.length > 0 ? myEntries.map((entry) => (
+                        <TableRow key={entry._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <TableCell className="text-sm">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-sm">{entry.location}</TableCell>
+                          <TableCell className="text-sm font-medium">{entry.skuId}</TableCell>
+                          <TableCell>{getObjectionTypeBadge(entry.objectionType)}</TableCell>
+                          <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
+                            <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No entries yet</p>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Completed Entries Table */}
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-2 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">Completed Entries</CardTitle>
+                <CardDescription>Entries where quantities matched ODIN</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 dark:bg-slate-800">
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Location</TableHead>
+                        <TableHead className="font-semibold">SKU</TableHead>
+                        <TableHead className="font-semibold">Qty</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {completedEntries.length > 0 ? completedEntries.map((entry) => (
+                        <TableRow key={entry._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <TableCell className="text-sm">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-sm">{entry.location}</TableCell>
+                          <TableCell className="text-sm font-medium">{entry.skuId}</TableCell>
+                          <TableCell className="text-sm font-medium">{entry.totalQuantityIdentified}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-slate-500 dark:text-slate-400">
+                            <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No completed entries yet</p>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-
-      <footer className="border-t bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm mt-auto">
-        <div className="container mx-auto px-4 py-4 text-center text-sm text-muted-foreground">
-          SCC Audit Management System - Audit Clerk Dashboard
-        </div>
-      </footer>
     </div>
   )
 }
