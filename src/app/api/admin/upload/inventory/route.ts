@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Inventory } from '@/lib/models'
-import { connectToMongoDB } from '@/lib/mongodb'
+import connectToMongoDB from '@/lib/mongodb'
 
 // Helper function to parse CSV (handles quoted values)
 function parseCSV(csvText: string) {
