@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { PrismaClient } from '@prisma/client'
+
+// ✅ Use Prisma Client directly to avoid import type issues
+const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +16,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Handle each role
     if (role === 'audit') {
       if (!staffId || !pin) {
         return NextResponse.json(
@@ -21,9 +25,10 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const auditStaff = await db.auditStaff.findUnique({
+      // ✅ Use any to bypass Prisma type checking issues
+      const auditStaff = await prisma.auditStaff.findUnique({
         where: { staffId: staffId.toUpperCase() }
-      })
+      }) as any
 
       if (!auditStaff) {
         return NextResponse.json(
@@ -32,10 +37,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // ✅ Use type assertion to bypass TypeScript error
-      const staff = auditStaff as any
-      
-      if (staff.pin !== pin) {
+      if (auditStaff.pin !== pin) {
         return NextResponse.json(
           { success: false, error: 'Invalid credentials' },
           { status: 401 }
@@ -44,8 +46,8 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        name: staff.name,
-        id: staff.id
+        name: auditStaff.name,
+        id: auditStaff.id
       })
     }
 
@@ -57,9 +59,10 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const clientStaff = await db.clientStaff.findUnique({
+      // ✅ Use any to bypass Prisma type checking issues
+      const clientStaff = await prisma.clientStaff.findUnique({
         where: { staffId: staffId.toUpperCase() }
-      })
+      }) as any
 
       if (!clientStaff) {
         return NextResponse.json(
@@ -68,10 +71,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // ✅ Use type assertion to bypass TypeScript error
-      const staff = clientStaff as any
-
-      if (staff.pin !== pin) {
+      if (clientStaff.pin !== pin) {
         return NextResponse.json(
           { success: false, error: 'Invalid credentials' },
           { status: 401 }
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        name: staff.name,
-        location: staff.location
+        name: clientStaff.name,
+        location: clientStaff.location
       })
     }
 
@@ -93,9 +93,10 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const admin = await db.admin.findUnique({
+      // ✅ Use any to bypass Prisma type checking issues
+      const admin = await prisma.admin.findUnique({
         where: { username }
-      })
+      }) as any
 
       if (!admin) {
         return NextResponse.json(
@@ -104,10 +105,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // ✅ Use type assertion to bypass TypeScript error
-      const adm = admin as any
-
-      if (adm.password !== password) {
+      if (admin.password !== password) {
         return NextResponse.json(
           { success: false, error: 'Invalid credentials' },
           { status: 401 }
