@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, RefreshCw, Download, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Download, Upload, FileSpreadsheet, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Staff = {
@@ -17,42 +16,42 @@ type Staff = {
   staffId: string
   name: string
   pin: string
-  locations: string[]
-  isActive: boolean
+  locations?: string[]
   location?: string
+  isActive: boolean
 }
 
-type AuditStaffForm = {
-  staffId: string
+type InventoryItem = {
+  _id: string
+  skuId: string
   name: string
-  pin: string
-  locations: string[]
+  pickingLocation?: string
+  bulkLocation?: string
+  minQtyOdin?: number
+  blockedQtyOdin?: number
+  maxQtyOdin?: number
 }
 
-type ClientStaffForm = {
-  staffId: string
-  name: string
-  pin: string
+type Query = {
+  _id: string
+  createdAt: string
   location: string
+  auditStaffName: string
+  skuId: string
+  skuName: string
+  totalQuantityIdentified: number
+  status: string
 }
 
 export default function AdminDashboard() {
   const router = useRouter()
-
   const [auditStaff, setAuditStaff] = useState<Staff[]>([])
   const [clientStaff, setClientStaff] = useState<Staff[]>([])
-  const [inventory, setInventory] = useState<any[]>([])
-  const [queries, setQueries] = useState<any[]>([])
-
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [queries, setQueries] = useState<Query[]>([])
   const [activeTab, setActiveTab] = useState<'overview' | 'audit-staff' | 'client-staff' | 'inventory' | 'queries'>('overview')
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
-
-  const [auditStaffForm, setAuditStaffForm] = useState<AuditStaffForm>({ staffId: '', name: '', pin: '', locations: [] })
-  const [clientStaffForm, setClientStaffForm] = useState<ClientStaffForm>({ staffId: '', name: '', pin: '', location: '' })
-
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadResults, setUploadResults] = useState<any>(null)
 
   useEffect(() => {
     loadData()
@@ -82,126 +81,57 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleDownloadCSV = async () => {
-    try {
-      const response = await fetch('/api/admin/staff?download=true')
-      if (!response.ok) throw new Error('Failed to download CSV')
-      
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `scc_audit_${new Date().toISOString().split('T')[0]}.csv`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-      
-      toast.success('CSV downloaded successfully')
-    } catch (error) {
-      console.error('Download error:', error)
-      toast.error('Failed to download CSV')
-    }
+  const handleDownloadTemplate = (type: string) => {
+    const url = `/api/admin/templates?type=${type}`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${type}_template.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    toast.success('Template downloaded successfully')
   }
 
-  const handleDeleteStaff = async (id: string, type: 'audit' | 'client') => {
-    if (!confirm(`Are you sure you want to delete this ${type} staff?`)) return
+  const handleCSVUpload = async (type: 'audit-staff' | 'client-staff' | 'inventory', file: File) => {
+    setIsUploading(true)
+    setUploadResults(null)
 
     try {
-      setIsUploading(true)
-      const response = await fetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, type, action: 'delete' })
-      })
+      const formData = new FormData()
+      formData.append('file', file)
 
-      if (response.ok) {
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff deleted successfully`)
-        await loadData()
-      } else {
-        toast.error('Failed to delete staff')
-      }
-    } catch (error) {
-      console.error('Delete error:', error)
-      toast.error('Failed to delete staff')
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const handleToggleStaff = async (id: string, type: 'audit' | 'client') => {
-    try {
-      setIsUploading(true)
-      const response = await fetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, type, action: 'toggle' })
-      })
-
-      if (response.ok) {
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff toggled`)
-        await loadData()
-      } else {
-        toast.error('Failed to toggle staff')
-      }
-    } catch (error) {
-      console.error('Toggle error:', error)
-      toast.error('Failed to toggle staff')
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const openAddDialog = (type: 'audit' | 'client') => {
-    setSelectedStaff(null)
-    setAuditStaffForm({ staffId: '', name: '', pin: '', locations: [] })
-    setClientStaffForm({ staffId: '', name: '', pin: '', location: '' })
-    setIsAddDialogOpen(true)
-  }
-
-  const openEditDialog = (staff: Staff) => {
-    setSelectedStaff(staff)
-    if (staff.locations && staff.locations.length > 0) {
-      setAuditStaffForm({ staffId: staff.staffId, name: staff.name, pin: staff.pin, locations: staff.locations })
-    } else {
-      setClientStaffForm({ staffId: staff.staffId, name: staff.name, pin: staff.pin, location: staff.location || '' })
-    }
-    setIsEditDialogOpen(true)
-  }
-
-  const handleSaveStaff = async (type: 'audit' | 'client') => {
-    if (!selectedStaff) return
-
-    try {
-      setIsUploading(true)
-
-      const endpoint = '/api/admin/staff'
-      const formData = type === 'audit' ? auditStaffForm : clientStaffForm
-
+      const endpoint = `/api/admin/upload/${type}`
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'add',
-          type,
-          ...formData
-        })
+        body: formData,
       })
 
-      if (response.ok) {
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} staff added successfully`)
-        setIsAddDialogOpen(false)
-        setIsEditDialogOpen(false)
-        setSelectedStaff(null)
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        toast.success(data.message)
+        setUploadResults(data)
         await loadData()
       } else {
-        toast.error('Failed to add staff')
+        toast.error(data.error || 'Upload failed')
+        setUploadResults(data)
       }
     } catch (error) {
-      console.error('Save error:', error)
-      toast.error('Failed to save staff')
+      console.error('CSV upload error:', error)
+      toast.error('Failed to upload CSV')
     } finally {
       setIsUploading(false)
+    }
+  }
+
+  const handleFileSelect = (type: 'audit-staff' | 'client-staff' | 'inventory', e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.name.endsWith('.csv')) {
+        toast.error('Please select a CSV file')
+        return
+      }
+      handleCSVUpload(type, file)
     }
   }
 
@@ -213,84 +143,98 @@ export default function AdminDashboard() {
       'Rejected': 'bg-red-500',
       'Resubmitted': 'bg-yellow-500',
       'Completed': 'bg-gray-400',
-      'Closed': 'bg-purple-500'
+      'Closed': 'bg-purple-500',
     }
     return <Badge className={statusColors[status] || 'bg-gray-500'}>{status}</Badge>
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-      <div className="border-b bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => router.push('/')} size="sm">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <p className="text-sm text-muted-foreground">SCC Audit Management System</p>
-              </div>
-            </div>
-            <Button onClick={handleDownloadCSV} variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Download CSV
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto p-6 max-w-7xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => router.push('/')}
+              size="sm"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
             </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Admin Dashboard</h1>
+              <p className="text-slate-600 dark:text-slate-400">Manage audit clerks, client staff, and inventory</p>
+            </div>
           </div>
+          <Button
+            variant="outline"
+            onClick={loadData}
+            disabled={isUploading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isUploading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6 flex-1">
-        <div className="grid gap-6">
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Total Audit Staff</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{auditStaff.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Total Client Staff</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{clientStaff.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Total SKUs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{inventory.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Total Queries</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{queries.length}</div>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Total Audit Staff
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                {auditStaff.length}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Total Client Staff
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                {clientStaff.length}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Total SKUs
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                {inventory.length}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Total Queries
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                {queries.length}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
 
-          {/* Tabs */}
-          <div className="space-y-4">
+        {/* Tabs */}
+        <Card className="bg-white dark:bg-slate-800 shadow-sm mb-6">
+          <CardContent className="p-4">
             <div className="flex gap-2">
               {[
                 { value: 'overview', label: 'Overview' },
                 { value: 'audit-staff', label: 'Audit Staff' },
                 { value: 'client-staff', label: 'Client Staff' },
                 { value: 'inventory', label: 'Inventory' },
-                { value: 'queries', label: 'All Queries' }
+                { value: 'queries', label: 'All Queries' },
               ].map((tab) => (
                 <Button
                   key={tab.value}
-                  variant={activeTab === tab.value ? 'default' : 'outline'}
+                  variant={activeTab === tab.value ? 'default' : 'ghost'}
                   onClick={() => setActiveTab(tab.value as any)}
                   className="flex-1"
                 >
@@ -298,322 +242,467 @@ export default function AdminDashboard() {
                 </Button>
               ))}
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Queries</CardTitle>
-                  <CardDescription>Latest 5 audit entries across all locations</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {queries.slice(0, 5).length > 0 ? (
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                Recent Queries
+              </CardTitle>
+              <CardDescription>Latest 5 audit entries across all locations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {queries.slice(0, 5).length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Auditor</TableHead>
+                      <TableHead>SKU ID</TableHead>
+                      <TableHead>SKU Name</TableHead>
+                      <TableHead>Total Qty</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {queries.slice(0, 5).map((query) => (
+                      <TableRow key={query._id}>
+                        <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{query.location}</TableCell>
+                        <TableCell>{query.auditStaffName}</TableCell>
+                        <TableCell>{query.skuId}</TableCell>
+                        <TableCell>{query.skuName}</TableCell>
+                        <TableCell>{query.totalQuantityIdentified}</TableCell>
+                        <TableCell>{getStatusBadge(query.status)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                  No queries yet
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Audit Staff Tab */}
+        {activeTab === 'audit-staff' && (
+          <div className="space-y-6">
+            <Card className="bg-white dark:bg-slate-800 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  CSV Upload - Audit Staff
+                </CardTitle>
+                <CardDescription>
+                  Upload a CSV file to bulk import audit staff members
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* CSV Format Info */}
+                <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Required CSV Format:</h3>
+                  <code className="text-sm text-slate-600 dark:text-slate-400 block mb-2">
+                    staffId,name,pin,locations
+                  </code>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    Example: <code>AUD-001,John Doe,1234,"Noida WH,Mumbai WH"</code>
+                  </p>
+                  <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1">
+                    <li><strong>staffId:</strong> Unique ID (e.g., AUD-001)</li>
+                    <li><strong>name:</strong> Full name of the staff</li>
+                    <li><strong>pin:</strong> 4-digit PIN (will be hashed)</li>
+                    <li><strong>locations:</strong> Comma-separated list of locations (optional)</li>
+                  </ul>
+                </div>
+
+                {/* Download Template Button */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleDownloadTemplate('audit-staff')}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Template
+                  </Button>
+                  <Button
+                    onClick={() => document.getElementById('audit-staff-upload')?.click()}
+                    disabled={isUploading}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploading ? 'Uploading...' : 'Upload CSV'}
+                  </Button>
+                </div>
+                <input
+                  id="audit-staff-upload"
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => handleFileSelect('audit-staff', e)}
+                  className="hidden"
+                />
+
+                {/* Upload Results */}
+                {uploadResults && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Added: {uploadResults.results?.added || 0} records</span>
+                    </div>
+                    {uploadResults.results?.skipped > 0 && (
+                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">Skipped: {uploadResults.results.skipped} duplicates</span>
+                      </div>
+                    )}
+                    {uploadResults.results?.errors > 0 && (
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                        <XCircle className="h-5 w-5" />
+                        <span className="font-medium">Errors: {uploadResults.results.errors} records</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Existing Staff Table */}
+                <div className="mt-6">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                    Existing Audit Staff ({auditStaff.length})
+                  </h3>
+                  <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Auditor</TableHead>
-                          <TableHead>SKU</TableHead>
-                          <TableHead>Total Qty</TableHead>
+                          <TableHead>SCC ID</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Locations</TableHead>
                           <TableHead>Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {queries.slice(0, 5).map((query) => (
-                          <TableRow key={query._id}>
-                            <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-                            <TableCell>{query.location}</TableCell>
-                            <TableCell>{query.auditStaffName}</TableCell>
-                            <TableCell>{query.skuId}</TableCell>
-                            <TableCell>{query.skuName}</TableCell>
-                            <TableCell>{query.totalQuantityIdentified}</TableCell>
-                            <TableCell>{getStatusBadge(query.status)}</TableCell>
+                        {auditStaff.map((staff) => (
+                          <TableRow key={staff._id}>
+                            <TableCell className="font-medium">{staff.staffId}</TableCell>
+                            <TableCell>{staff.name}</TableCell>
+                            <TableCell>
+                              {staff.locations?.map((loc) => (
+                                <Badge key={loc} variant="outline" className="mr-1 mb-1">
+                                  {loc}
+                                </Badge>
+                              ))}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={staff.isActive ? 'bg-green-500' : 'bg-red-500'}>
+                                {staff.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                  ) : (
-                    <p className="text-center py-8 text-muted-foreground">No queries yet</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Audit Staff Tab */}
-          {activeTab === 'audit-staff' && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Audit Staff Management</CardTitle>
-                  <Button onClick={openAddDialog.bind(null, 'audit')} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Staff
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>SCC ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Locations</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {auditStaff.map((staff) => (
-                        <TableRow key={staff._id}>
-                          <TableCell>{staff.staffId}</TableCell>
-                          <TableCell>{staff.name}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {staff.locations.map((loc) => (
-                                <Badge key={loc} variant="outline">{loc}</Badge>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={staff.isActive ? 'bg-green-500' : 'bg-red-500'}>
-                              {staff.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button onClick={openEditDialog.bind(null, staff)} variant="outline" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button onClick={handleToggleStaff.bind(null, staff._id, 'audit')} variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button onClick={handleDeleteStaff.bind(null, staff._id, 'audit')} variant="destructive" size="sm" disabled={isUploading}>
-                                {isUploading ? '...' : <Trash2 className="h-4 w-4" />}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Client Staff Tab */}
-          {activeTab === 'client-staff' && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Client Staff Management</CardTitle>
-                  <Button onClick={openAddDialog.bind(null, 'client')} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Staff
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>SCC ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {clientStaff.map((staff) => (
-                        <TableRow key={staff._id}>
-                          <TableCell>{staff.staffId}</TableCell>
-                          <TableCell>{staff.name}</TableCell>
-                          <TableCell>{staff.location}</TableCell>
-                          <TableCell>
-                            <Badge className={staff.isActive ? 'bg-green-500' : 'bg-red-500'}>
-                              {staff.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button onClick={openEditDialog.bind(null, staff)} variant="outline" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button onClick={handleToggleStaff.bind(null, staff._id, 'client')} variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button onClick={handleDeleteStaff.bind(null, staff._id, 'client')} variant="destructive" size="sm" disabled={isUploading}>
-                                {isUploading ? '...' : <Trash2 className="h-4 w-4" />}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Queries Tab */}
-          {activeTab === 'queries' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>All Queries</CardTitle>
-                <CardDescription>View and manage all audit queries</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Auditor</TableHead>
-                        <TableHead>SKU ID</TableHead>
-                        <TableHead>Total Qty</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {queries.map((query) => (
-                        <TableRow key={query._id}>
-                          <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>{query.location}</TableCell>
-                          <TableCell>{query.auditStaffName}</TableCell>
-                          <TableCell>{query.skuId}</TableCell>
-                          <TableCell className="max-w-xs truncate">{query.skuName}</TableCell>
-                          <TableCell>{query.totalQuantityIdentified}</TableCell>
-                          <TableCell>{getStatusBadge(query.status)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Add/Edit Dialog */}
-      {(isAddDialogOpen || isEditDialogOpen) && selectedStaff && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>{isEditDialogOpen ? 'Edit Staff' : 'Add Staff'}</CardTitle>
-              <CardDescription>
-                {isEditDialogOpen ? 'Manage locations for ' + selectedStaff.name : 'Add new ' + (selectedStaff.locations && selectedStaff.locations.length > 0 ? 'audit' : 'client') + ' staff member'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="staffId">SCC ID</Label>
-                <Input
-                  id="staffId"
-                  placeholder="e.g., 26C"
-                  value={selectedStaff.staffId}
-                  onChange={(e) => setSelectedStaff({ ...selectedStaff, staffId: e.target.value.toUpperCase() })}
-                  className="uppercase"
-                  disabled={isEditDialogOpen}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter full name"
-                  value={selectedStaff.name}
-                  onChange={(e) => setSelectedStaff({ ...selectedStaff, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pin">PIN</Label>
-                <Input
-                  id="pin"
-                  type="password"
-                  placeholder="Enter 4-digit PIN"
-                  value={selectedStaff.pin}
-                  onChange={(e) => setSelectedStaff({ ...selectedStaff, pin: e.target.value })}
-                  maxLength={4}
-                />
-              </div>
-              {selectedStaff.locations && selectedStaff.locations.length > 0 && (
-                <div className="space-y-2">
-                  <Label htmlFor="locations">Locations</Label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {['Noida WH', 'Mumbai WH', 'Hyderabad WH', 'Bengaluru WH', 'Gurugram WH', 'Delhi Retail'].map((location) => (
-                      <div key={location} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`location-${location}`}
-                          checked={selectedStaff.locations.includes(location)}
-                          onChange={(e) => {
-                            const checked = e.target.checked
-                            setSelectedStaff({
-                              ...selectedStaff,
-                              locations: checked
-                                ? [...selectedStaff.locations, location]
-                                : selectedStaff.locations.filter((l) => l !== location)
-                            })
-                          }}
-                          className="rounded border-gray-300"
-                        />
-                        <Label htmlFor={`location-${location}`} className="cursor-pointer">
-                          {location}
-                        </Label>
-                      </div>
-                    ))}
                   </div>
                 </div>
-              )}
-              {(!selectedStaff.locations || selectedStaff.locations.length === 0) && (
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Select
-                    value={selectedStaff.location || ''}
-                    onValueChange={(value) => setSelectedStaff({ ...selectedStaff, location: value })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Noida WH">Noida WH</SelectItem>
-                      <SelectItem value="Mumbai WH">Mumbai WH</SelectItem>
-                      <SelectItem value="Hyderabad WH">Hyderabad WH</SelectItem>
-                      <SelectItem value="Bengaluru WH">Bengaluru WH</SelectItem>
-                      <SelectItem value="Gurugram WH">Gurugram WH</SelectItem>
-                      <SelectItem value="Delhi Retail">Delhi Retail</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </CardContent>
-            <div className="flex gap-2 p-4">
-              <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setIsEditDialogOpen(false); setSelectedStaff(null) }}>
-                Cancel
-              </Button>
-              <Button onClick={() => handleSaveStaff(selectedStaff.locations && selectedStaff.locations.length > 0 ? 'audit' : 'client')} disabled={isUploading}>
-                {isUploading ? '...' : 'Save'}
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-      <footer className="border-t bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm mt-auto">
-        <div className="container mx-auto px-4 py-4 text-center text-sm text-muted-foreground">
-          SCC Audit Management System - Admin Dashboard
-        </div>
-      </footer>
+        {/* Client Staff Tab */}
+        {activeTab === 'client-staff' && (
+          <div className="space-y-6">
+            <Card className="bg-white dark:bg-slate-800 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  CSV Upload - Client Staff
+                </CardTitle>
+                <CardDescription>
+                  Upload a CSV file to bulk import client staff members
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* CSV Format Info */}
+                <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Required CSV Format:</h3>
+                  <code className="text-sm text-slate-600 dark:text-slate-400 block mb-2">
+                    staffId,name,pin,location
+                  </code>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    Example: <code>CLI-001,Amit Kumar,4321,Noida WH</code>
+                  </p>
+                  <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1">
+                    <li><strong>staffId:</strong> Unique ID (e.g., CLI-001)</li>
+                    <li><strong>name:</strong> Full name of the staff</li>
+                    <li><strong>pin:</strong> 4-digit PIN (will be hashed)</li>
+                    <li><strong>location:</strong> Assigned location</li>
+                  </ul>
+                </div>
+
+                {/* Download Template Button */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleDownloadTemplate('client-staff')}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Template
+                  </Button>
+                  <Button
+                    onClick={() => document.getElementById('client-staff-upload')?.click()}
+                    disabled={isUploading}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploading ? 'Uploading...' : 'Upload CSV'}
+                  </Button>
+                </div>
+                <input
+                  id="client-staff-upload"
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => handleFileSelect('client-staff', e)}
+                  className="hidden"
+                />
+
+                {/* Upload Results */}
+                {uploadResults && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Added: {uploadResults.results?.added || 0} records</span>
+                    </div>
+                    {uploadResults.results?.skipped > 0 && (
+                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">Skipped: {uploadResults.results.skipped} duplicates</span>
+                      </div>
+                    )}
+                    {uploadResults.results?.errors > 0 && (
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                        <XCircle className="h-5 w-5" />
+                        <span className="font-medium">Errors: {uploadResults.results.errors} records</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Existing Staff Table */}
+                <div className="mt-6">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                    Existing Client Staff ({clientStaff.length})
+                  </h3>
+                  <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>SCC ID</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {clientStaff.map((staff) => (
+                          <TableRow key={staff._id}>
+                            <TableCell className="font-medium">{staff.staffId}</TableCell>
+                            <TableCell>{staff.name}</TableCell>
+                            <TableCell>{staff.location}</TableCell>
+                            <TableCell>
+                              <Badge className={staff.isActive ? 'bg-green-500' : 'bg-red-500'}>
+                                {staff.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Inventory Tab */}
+        {activeTab === 'inventory' && (
+          <div className="space-y-6">
+            <Card className="bg-white dark:bg-slate-800 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  CSV Upload - Inventory
+                </CardTitle>
+                <CardDescription>
+                  Upload a CSV file to bulk import inventory items
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* CSV Format Info */}
+                <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Required CSV Format:</h3>
+                  <code className="text-sm text-slate-600 dark:text-slate-400 block mb-2">
+                    skuId,name,pickingLocation,bulkLocation,minQtyOdin,blockedQtyOdin,maxQtyOdin
+                  </code>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    Example: <code>657611,Product A,A-1-1,B-1-1,50,5,200</code>
+                  </p>
+                  <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1">
+                    <li><strong>skuId:</strong> Unique SKU ID (required)</li>
+                    <li><strong>name:</strong> Product name (required)</li>
+                    <li><strong>pickingLocation:</strong> Picking location (optional)</li>
+                    <li><strong>bulkLocation:</strong> Bulk storage location (optional)</li>
+                    <li><strong>minQtyOdin:</strong> Minimum quantity from ODIN (optional, default: 0)</li>
+                    <li><strong>blockedQtyOdin:</strong> Blocked quantity from ODIN (optional, default: 0)</li>
+                    <li><strong>maxQtyOdin:</strong> Maximum quantity from ODIN (optional, default: 0)</li>
+                  </ul>
+                </div>
+
+                {/* Download Template Button */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleDownloadTemplate('inventory')}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Template
+                  </Button>
+                  <Button
+                    onClick={() => document.getElementById('inventory-upload')?.click()}
+                    disabled={isUploading}
+                    className="flex-1"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploading ? 'Uploading...' : 'Upload CSV'}
+                  </Button>
+                </div>
+                <input
+                  id="inventory-upload"
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => handleFileSelect('inventory', e)}
+                  className="hidden"
+                />
+
+                {/* Upload Results */}
+                {uploadResults && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Added: {uploadResults.results?.added || 0} records</span>
+                    </div>
+                    {uploadResults.results?.updated > 0 && (
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="font-medium">Updated: {uploadResults.results.updated} records</span>
+                      </div>
+                    )}
+                    {uploadResults.results?.skipped > 0 && (
+                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="font-medium">Skipped: {uploadResults.results.skipped} duplicates</span>
+                      </div>
+                    )}
+                    {uploadResults.results?.errors > 0 && (
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                        <XCircle className="h-5 w-5" />
+                        <span className="font-medium">Errors: {uploadResults.results.errors} records</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Existing Inventory Table */}
+                <div className="mt-6">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                    Existing Inventory ({inventory.length})
+                  </h3>
+                  <div className="rounded-md border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>SKU ID</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Picking Location</TableHead>
+                          <TableHead>Bulk Location</TableHead>
+                          <TableHead>Min Qty</TableHead>
+                          <TableHead>Blocked Qty</TableHead>
+                          <TableHead>Max Qty</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {inventory.map((item) => (
+                          <TableRow key={item._id}>
+                            <TableCell className="font-medium">{item.skuId}</TableCell>
+                            <TableCell>{item.name}</TableCell>
+                            <TableCell>{item.pickingLocation || '-'}</TableCell>
+                            <TableCell>{item.bulkLocation || '-'}</TableCell>
+                            <TableCell>{item.minQtyOdin || 0}</TableCell>
+                            <TableCell>{item.blockedQtyOdin || 0}</TableCell>
+                            <TableCell>{item.maxQtyOdin || 0}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Queries Tab */}
+        {activeTab === 'queries' && (
+          <Card className="bg-white dark:bg-slate-800 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                All Queries
+              </CardTitle>
+              <CardDescription>View and manage all audit entries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border border-slate-200 dark:border-slate-700">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Auditor</TableHead>
+                      <TableHead>SKU ID</TableHead>
+                      <TableHead>SKU Name</TableHead>
+                      <TableHead>Total Qty</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {queries.map((query) => (
+                      <TableRow key={query._id}>
+                        <TableCell>{new Date(query.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{query.location}</TableCell>
+                        <TableCell>{query.auditStaffName}</TableCell>
+                        <TableCell>{query.skuId}</TableCell>
+                        <TableCell>{query.skuName}</TableCell>
+                        <TableCell>{query.totalQuantityIdentified}</TableCell>
+                        <TableCell>{getStatusBadge(query.status)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Footer */}
+        <footer className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
+          <p>SCC Audit Management System - Admin Dashboard</p>
+        </footer>
+      </div>
     </div>
   )
 }
