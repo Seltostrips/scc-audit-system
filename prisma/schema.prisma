@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("mongodb+srv://scc-admin:1dA2WhykZD0B6cWS@cluster0.tfrunk2.mongodb.net/?appName=Cluster0&retryWrites=true&w=majorityApp")
 }
 
 model AuditStaff {
