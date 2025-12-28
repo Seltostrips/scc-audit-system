@@ -1,40 +1,58 @@
 import mongoose from 'mongoose'
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/scc_audit'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://scc-admin:1dA2WhykZD0B6cWS@cluster0.tfrunk2.mongodb.net/?appName=Cluster0&retryWrites=true&w=majorityApp'
 
-// Connection options for production
-const options = {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-  socketTimeoutMS: 45000, // Close sockets after 45 seconds
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable')
 }
 
-export async function connectToMongoDB() {
-  try {
-    await mongoose.connect(MONGODB_URI, options)
-    console.log('✅ Connected to MongoDB')
-    
-    mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err)
-    })
-    
-    mongoose.connection.on('disconnected', () => {
-      console.log('⚠️  MongoDB disconnected')
-    })
-    
-    return true
-  } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error)
-    return false
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections growing exponentially
+ * during API Route usage.
+ */
+interface MongooseCache {
+  conn: typeof mongoose | null
+  promise: Promise<typeof mongoose> | null
+}
+
+declare global {
+  var mongoose: MongooseCache | undefined
+}
+
+let cached: MongooseCache = global.mongoose || { conn: null, promise: null }
+
+if (!global.mongoose) {
+  global.mongoose = cached
+}
+
+async function connectToMongoDB() {
+  if (cached.conn) {
+    return cached.conn
   }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    }
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      return mongoose
+    })
+  }
+
+  try {
+    cached.conn = await cached.promise
+  } catch (e) {
+    cached.promise = null
+    throw e
+  }
+
+  return cached.conn
 }
 
-export async function disconnectFromMongoDB() {
-  await mongoose.disconnect()
-  console.log('✅ Disconnected from MongoDB')
-}
-
-export default mongoose
-
-export function isConnected() {
-  return mongoose.connection.readyState === 1 // 1 = connected
-}
+export default connectToMongoDB
