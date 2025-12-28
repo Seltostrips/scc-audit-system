@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AuditStaff, ClientStaff } from '@/lib/models'
-import { connectToMongoDB } from '@/lib/mongodb'
+import connectToMongoDB from '@/lib/mongodb'
 import bcrypt from 'bcryptjs'
 
 export async function GET(request: NextRequest) {
